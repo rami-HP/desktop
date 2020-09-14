@@ -1,5 +1,13 @@
 import { randomBytes as nodeCryptoGetRandomBytes } from 'crypto'
-import guid from 'uuid/v4'
+
+// Work around synchronously seeding of random buffer in the v1
+// version of uuid by explicitly only requiring v4. As far as I'm
+// aware we cannot use an import statement here without causing webpack
+// to load the v1 version as well.
+//
+// See
+//  https://github.com/kelektiv/node-uuid/issues/189
+const guid = require('uuid/v4') as (options?: { random?: Buffer }) => string
 
 /**
  * Fills a buffer with the required number of random bytes.
@@ -12,12 +20,12 @@ import guid from 'uuid/v4'
  *  https://developer.mozilla.org/en-US/docs/Web/API/Window/crypto
  *  https://github.com/kelektiv/node-uuid/issues/189
  */
-function getRandomBytes(count: number) {
+function getRandomBytes(count: number): Buffer {
   if (window.crypto) {
     const rndBuf = new Uint8Array(count)
     crypto.getRandomValues(rndBuf)
 
-    return rndBuf
+    return Buffer.from(rndBuf.buffer as ArrayBuffer)
   }
 
   return nodeCryptoGetRandomBytes(count)

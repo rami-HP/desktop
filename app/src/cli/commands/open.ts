@@ -5,7 +5,7 @@ import { ICommandModule, mriArgv } from '../load-commands'
 import { openDesktop } from '../open-desktop'
 import { parseRemote } from '../../lib/remote-parsing'
 
-export const command: ICommandModule = {
+const command: ICommandModule = {
   command: 'open <path>',
   aliases: ['<path>'],
   description: 'Open a git repository in GitHub Desktop',
@@ -37,3 +37,4 @@ export const command: ICommandModule = {
     }
   },
 }
+export = command

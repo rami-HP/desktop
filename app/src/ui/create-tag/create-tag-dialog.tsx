@@ -2,12 +2,15 @@ import * as React from 'react'
 
 import { Repository } from '../../models/repository'
 import { Dispatcher } from '../dispatcher'
+import { sanitizedRefName } from '../../lib/sanitize-ref-name'
+import { TextBox } from '../lib/text-box'
+import { Row } from '../lib/row'
 import { Dialog, DialogError, DialogContent, DialogFooter } from '../dialog'
 
 import { OkCancelButtonGroup } from '../dialog/ok-cancel-button-group'
 import { startTimer } from '../lib/timing'
+import { Octicon, OcticonSymbol } from '../octicons'
 import { Ref } from '../lib/ref'
-import { RefNameTextBox } from '../lib/ref-name-text-box'
 
 interface ICreateTagProps {
   readonly repository: Repository
@@ -19,7 +22,8 @@ interface ICreateTagProps {
 }
 
 interface ICreateTagState {
-  readonly tagName: string
+  readonly proposedName: string
+  readonly sanitizedName: string
 
   /**
    * Note: once tag creation has been initiated this value stays at true
@@ -40,15 +44,18 @@ export class CreateTag extends React.Component<
   public constructor(props: ICreateTagProps) {
     super(props)
 
+    const proposedName = props.initialName || ''
+
     this.state = {
-      tagName: props.initialName || '',
+      proposedName,
+      sanitizedName: sanitizedRefName(proposedName),
       isCreatingTag: false,
     }
   }
 
   public render() {
     const error = this.getCurrentError()
-    const disabled = error !== null || this.state.tagName.length === 0
+    const disabled = error !== null || this.state.proposedName.length === 0
 
     return (
       <Dialog
@@ -62,11 +69,16 @@ export class CreateTag extends React.Component<
         {error && <DialogError>{error}</DialogError>}
 
         <DialogContent>
-          <RefNameTextBox
-            label="Name"
-            initialValue={this.props.initialName}
-            onValueChange={this.updateTagName}
-          />
+          <Row>
+            <TextBox
+              label="Name"
+              value={this.state.proposedName}
+              autoFocus={true}
+              onValueChanged={this.updateTagName}
+            />
+          </Row>
+
+          {this.renderTagNameWarning()}
         </DialogContent>
 
         <DialogFooter>
@@ -79,19 +91,44 @@ export class CreateTag extends React.Component<
     )
   }
 
+  private renderTagNameWarning() {
+    const { proposedName, sanitizedName } = this.state
+
+    if (proposedName !== sanitizedName) {
+      return (
+        <Row className="warning-helper-text">
+          <Octicon symbol={OcticonSymbol.alert} />
+          <p>
+            Will be created as <Ref>{sanitizedName}</Ref>.
+          </p>
+        </Row>
+      )
+    } else {
+      return null
+    }
+  }
+
   private getCurrentError(): JSX.Element | null {
-    if (this.state.tagName.length > MaxTagNameLength) {
+    const { sanitizedName, proposedName } = this.state
+
+    if (sanitizedName.length > MaxTagNameLength) {
       return (
         <>The tag name cannot be longer than {MaxTagNameLength} characters</>
       )
     }
 
+    // Show an error if the sanitization logic causes the tag name to be an empty
+    // string (we only want to show this if the user has already typed something).
+    if (proposedName.length > 0 && sanitizedName.length === 0) {
+      return <>Invalid tag name.</>
+    }
+
     const alreadyExists =
-      this.props.localTags && this.props.localTags.has(this.state.tagName)
+      this.props.localTags && this.props.localTags.has(sanitizedName)
     if (alreadyExists) {
       return (
         <>
-          A tag named <Ref>{this.state.tagName}</Ref> already exists
+          A tag named <Ref>{sanitizedName}</Ref> already exists
         </>
       )
     }
@@ -99,14 +136,15 @@ export class CreateTag extends React.Component<
     return null
   }
 
-  private updateTagName = (tagName: string) => {
+  private updateTagName = (name: string) => {
     this.setState({
-      tagName,
+      proposedName: name,
+      sanitizedName: sanitizedRefName(name),
     })
   }
 
   private createTag = async () => {
-    const name = this.state.tagName
+    const name = this.state.sanitizedName
     const repository = this.props.repository
 
     if (name.length > 0) {

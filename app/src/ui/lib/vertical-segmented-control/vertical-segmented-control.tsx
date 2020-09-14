@@ -2,12 +2,10 @@ import * as React from 'react'
 import { createUniqueId, releaseUniqueId } from '../id-pool'
 import { SegmentedItem } from './segmented-item'
 
-type Key = string | number
-
 /**
  * An item which is rendered as a choice in the segmented control.
  */
-export interface ISegmentedItem<T extends Key> {
+export interface ISegmentedItem {
   /**
    * The title for the segmented item. This should be kept short.
    */
@@ -17,20 +15,10 @@ export interface ISegmentedItem<T extends Key> {
    * An optional description which explains the consequences of
    * selecting this item.
    */
-  readonly description?: string | JSX.Element
-
-  /**
-   * The key to use for that item. This key will be passed as
-   * the first argument of onSelectionChanged() when the item gets
-   * selected.
-   *
-   * Note that keys should be unique so there can't be two items on
-   * the same <VerticalSegmentedControl /> component with the same key.
-   */
-  readonly key: T
+  readonly description?: string
 }
 
-interface IVerticalSegmentedControlProps<T extends Key> {
+interface IVerticalSegmentedControlProps {
   /**
    * An optional label for the segmented control. Will be rendered
    * as a legend element inside a field group. Consumers are strongly
@@ -43,21 +31,20 @@ interface IVerticalSegmentedControlProps<T extends Key> {
    * An item must have a title and may (encouraged) also have a description
    * which explains what the consequences of selecting the items are.
    */
-  readonly items: ReadonlyArray<ISegmentedItem<T>>
+  readonly items: ReadonlyArray<ISegmentedItem>
 
   /**
-   * The currently selected item, denoted by its key.
+   * The currently selected item, denoted by its position in the items
+   * array.
    */
-  readonly selectedKey: T
+  readonly selectedIndex: number
 
   /**
-   * A function that's called whenever the selected item changes, either
+   * A function that's called whenever the selected item index changes, either
    * as a result of a click using a pointer device or as a result of the user
    * hitting an up/down while the component has focus.
-   *
-   * The key argument corresponds to the key property of the selected item.
    */
-  readonly onSelectionChanged: (key: T) => void
+  readonly onSelectionChanged: (selectedIndex: number) => void
 }
 
 interface IVerticalSegmentedControlState {
@@ -73,14 +60,14 @@ interface IVerticalSegmentedControlState {
  * A component for presenting a small number of choices to the user. Equivalent
  * of a radio button group but styled as a vertically oriented segmented control.
  */
-export class VerticalSegmentedControl<T extends Key> extends React.Component<
-  IVerticalSegmentedControlProps<T>,
+export class VerticalSegmentedControl extends React.Component<
+  IVerticalSegmentedControlProps,
   IVerticalSegmentedControlState
 > {
   private listRef: HTMLUListElement | null = null
   private formRef: HTMLFormElement | null = null
 
-  public constructor(props: IVerticalSegmentedControlProps<T>) {
+  public constructor(props: IVerticalSegmentedControlProps) {
     super(props)
     this.state = {}
   }
@@ -108,17 +95,15 @@ export class VerticalSegmentedControl<T extends Key> extends React.Component<
     }
   }
 
-  public componentWillReceiveProps(
-    nextProps: IVerticalSegmentedControlProps<T>
-  ) {
+  public componentWillReceiveProps(nextProps: IVerticalSegmentedControlProps) {
     if (this.props.label !== nextProps.label) {
       this.updateListId(nextProps.label)
     }
   }
 
-  private onItemClick = (key: T) => {
-    if (key !== this.props.selectedKey) {
-      this.props.onSelectionChanged(key)
+  private onItemClick = (index: number) => {
+    if (index !== this.props.selectedIndex) {
+      this.props.onSelectionChanged(index)
     }
   }
 
@@ -126,31 +111,29 @@ export class VerticalSegmentedControl<T extends Key> extends React.Component<
     return `${this.state.listId}_Item_${index}`
   }
 
-  private renderItem(item: ISegmentedItem<T>, index: number) {
+  private renderItem(item: ISegmentedItem, index: number, selected: boolean) {
     return (
       <SegmentedItem
         id={this.getListItemId(index)}
-        key={item.key}
+        key={index}
         title={item.title}
         description={item.description}
-        isSelected={item.key === this.props.selectedKey}
-        value={item.key}
+        index={index}
+        isSelected={selected}
         onClick={this.onItemClick}
       />
     )
   }
 
   private onKeyDown = (event: React.KeyboardEvent<HTMLUListElement>) => {
-    const selectedIndex = this.findSelectedIndex(this.props.items)
-
     if (event.key === 'ArrowUp') {
-      if (selectedIndex > 0) {
-        this.props.onSelectionChanged(this.props.items[selectedIndex - 1].key)
+      if (this.props.selectedIndex > 0) {
+        this.props.onSelectionChanged(this.props.selectedIndex - 1)
       }
       event.preventDefault()
     } else if (event.key === 'ArrowDown') {
-      if (selectedIndex < this.props.items.length - 1) {
-        this.props.onSelectionChanged(this.props.items[selectedIndex + 1].key)
+      if (this.props.selectedIndex < this.props.items.length - 1) {
+        this.props.onSelectionChanged(this.props.selectedIndex + 1)
       }
       event.preventDefault()
     } else if (event.key === 'Enter') {
@@ -179,15 +162,17 @@ export class VerticalSegmentedControl<T extends Key> extends React.Component<
   }
 
   public render() {
-    if (this.props.items.length === 0) {
+    if (!this.props.items.length) {
       return null
     }
 
+    const selectedIndex = this.props.selectedIndex
     const label = this.props.label ? (
       <legend onClick={this.onLegendClick}>{this.props.label}</legend>
-    ) : undefined
+    ) : (
+      undefined
+    )
 
-    const selectedIndex = this.findSelectedIndex(this.props.items)
     const activeDescendant = this.getListItemId(selectedIndex)
 
     // Using a fieldset with a legend seems to be the way to go here since
@@ -205,13 +190,11 @@ export class VerticalSegmentedControl<T extends Key> extends React.Component<
           role="radiogroup"
           aria-activedescendant={activeDescendant}
         >
-          {this.props.items.map((item, index) => this.renderItem(item, index))}
+          {this.props.items.map((item, index) =>
+            this.renderItem(item, index, index === selectedIndex)
+          )}
         </ul>
       </fieldset>
     )
-  }
-
-  private findSelectedIndex(items: ReadonlyArray<ISegmentedItem<T>>) {
-    return items.findIndex(item => item.key === this.props.selectedKey)
   }
 }

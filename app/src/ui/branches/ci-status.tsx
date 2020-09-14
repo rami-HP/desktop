@@ -1,13 +1,12 @@
 import * as React from 'react'
 import { Octicon, OcticonSymbol } from '../octicons'
-import classNames from 'classnames'
+import { APIRefState, IAPIRefStatus } from '../../lib/api'
+import { assertNever } from '../../lib/fatal-error'
+import * as classNames from 'classnames'
+import { getRefStatusSummary } from './pull-request-status'
 import { GitHubRepository } from '../../models/github-repository'
 import { IDisposable } from 'event-kit'
 import { Dispatcher } from '../dispatcher'
-import {
-  ICombinedRefCheck,
-  isSuccess,
-} from '../../lib/stores/commit-status-store'
 
 interface ICIStatusProps {
   /** The classname for the underlying element. */
@@ -23,7 +22,7 @@ interface ICIStatusProps {
 }
 
 interface ICIStatusState {
-  readonly check: ICombinedRefCheck | null
+  readonly status: IAPIRefStatus | null
 }
 
 /** The little CI status indicator. */
@@ -36,7 +35,7 @@ export class CIStatus extends React.PureComponent<
   public constructor(props: ICIStatusProps) {
     super(props)
     this.state = {
-      check: props.dispatcher.tryGetCommitStatus(
+      status: props.dispatcher.tryGetCommitStatus(
         this.props.repository,
         this.props.commitRef
       ),
@@ -67,7 +66,7 @@ export class CIStatus extends React.PureComponent<
       this.props.commitRef !== prevProps.commitRef
     ) {
       this.setState({
-        check: this.props.dispatcher.tryGetCommitStatus(
+        status: this.props.dispatcher.tryGetCommitStatus(
           this.props.repository,
           this.props.commitRef
         ),
@@ -84,87 +83,43 @@ export class CIStatus extends React.PureComponent<
     this.unsubscribe()
   }
 
-  private onStatus = (check: ICombinedRefCheck | null) => {
-    this.setState({ check })
+  private onStatus = (status: IAPIRefStatus | null) => {
+    this.setState({ status })
   }
 
   public render() {
-    const { check } = this.state
+    const { status } = this.state
 
-    if (check === null || check.checks.length === 0) {
+    if (status === null || status.total_count === 0) {
       return null
     }
+
+    const title = getRefStatusSummary(status)
+    const state = status.state
 
     return (
       <Octicon
         className={classNames(
           'ci-status',
-          `ci-status-${getClassNameForCheck(check)}`,
+          `ci-status-${state}`,
           this.props.className
         )}
-        symbol={getSymbolForCheck(check)}
-        title={getRefCheckSummary(check)}
+        symbol={getSymbolForState(state)}
+        title={title}
       />
     )
   }
 }
 
-function getSymbolForCheck(check: ICombinedRefCheck): OcticonSymbol {
-  switch (check.conclusion) {
-    case 'timed_out':
-      return OcticonSymbol.x
+function getSymbolForState(state: APIRefState): OcticonSymbol {
+  switch (state) {
+    case 'pending':
+      return OcticonSymbol.primitiveDot
     case 'failure':
       return OcticonSymbol.x
-    case 'neutral':
-      return OcticonSymbol.primitiveSquare
     case 'success':
       return OcticonSymbol.check
-    case 'cancelled':
-      return OcticonSymbol.stop
-    case 'action_required':
-      return OcticonSymbol.alert
-    case 'skipped':
-      return OcticonSymbol.skip
-    case 'stale':
-      return OcticonSymbol.issueReopened
   }
 
-  // Pending
-  return OcticonSymbol.primitiveDot
-}
-
-function getClassNameForCheck(check: ICombinedRefCheck): string {
-  switch (check.conclusion) {
-    case 'timed_out':
-      return 'timed-out'
-    case 'action_required':
-      return 'action-required'
-    case 'failure':
-    case 'neutral':
-    case 'success':
-    case 'cancelled':
-    case 'skipped':
-    case 'stale':
-      return check.conclusion
-  }
-
-  // Pending
-  return 'pending'
-}
-
-/**
- * Convert the combined check to an app-friendly string.
- */
-export function getRefCheckSummary(check: ICombinedRefCheck): string {
-  if (check.checks.length === 1) {
-    const { name, description } = check.checks[0]
-    return `${name}: ${description}`
-  }
-
-  const successCount = check.checks.reduce(
-    (acc, cur) => acc + (isSuccess(cur) ? 1 : 0),
-    0
-  )
-
-  return `${successCount}/${check.checks.length} checks OK`
+  return assertNever(state, `Unknown state: ${state}`)
 }

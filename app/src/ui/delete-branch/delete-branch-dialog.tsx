@@ -107,6 +107,6 @@ export class DeleteBranch extends React.Component<
     )
     this.props.onDeleted(repository)
 
-    this.props.onDismissed()
+    await dispatcher.closePopup()
   }
 }

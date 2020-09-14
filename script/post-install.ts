@@ -3,7 +3,7 @@
 import * as Path from 'path'
 import { spawnSync, SpawnSyncOptions } from 'child_process'
 
-import glob from 'glob'
+import * as glob from 'glob'
 
 const root = Path.dirname(__dirname)
 
@@ -36,7 +36,7 @@ findYarnVersion(path => {
   )
 
   if (result.status !== 0) {
-    process.exit(result.status || 1)
+    process.exit(result.status)
   }
 
   result = spawnSync(
@@ -46,18 +46,18 @@ findYarnVersion(path => {
   )
 
   if (result.status !== 0) {
-    process.exit(result.status || 1)
+    process.exit(result.status)
   }
 
   result = spawnSync('node', [path, 'compile:tslint'], options)
 
   if (result.status !== 0) {
-    process.exit(result.status || 1)
+    process.exit(result.status)
   }
 
   result = spawnSync('node', [path, 'compile:script'], options)
 
   if (result.status !== 0) {
-    process.exit(result.status || 1)
+    process.exit(result.status)
   }
 })

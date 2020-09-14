@@ -74,7 +74,9 @@ describe('AppStore', () => {
 
     const githubUserStore = new GitHubUserStore(db)
 
-    const repositoryStateManager = new RepositoryStateCache()
+    const repositoryStateManager = new RepositoryStateCache(repo =>
+      githubUserStore.getUsersForRepository(repo)
+    )
 
     const apiRepositoriesStore = new ApiRepositoriesStore(accountsStore)
 
@@ -122,7 +124,9 @@ describe('AppStore', () => {
           return selectedState.state
         default:
           throw new Error(
-            `Got selected state of type ${selectedState.type} which is not supported.`
+            `Got selected state of type ${
+              selectedState.type
+            } which is not supported.`
           )
       }
     }

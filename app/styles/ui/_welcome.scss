@@ -24,10 +24,6 @@
     .actions {
       margin-top: var(--spacing-double);
     }
-
-    hr {
-      margin: var(--spacing-double) 0;
-    }
   }
 
   #sign-in-enterprise {
@@ -40,12 +36,8 @@
     }
 
     .actions {
-      display: inline-block;
-      margin-top: var(--spacing-double);
-    }
-
-    hr {
-      margin: var(--spacing-double) 0;
+      display: inline;
+      margin-top: var(--spacing);
     }
   }
 
@@ -96,29 +88,6 @@
       transform: translateX(100%);
     }
   }
-
-  .create-account-link {
-    font-weight: var(--font-weight-semibold);
-  }
-
-  .basic-auth-link {
-    font-size: var(--font-size);
-  }
-
-  .welcome-main-buttons {
-    margin-top: var(--spacing-quad);
-
-    .button-component {
-      padding-left: var(--spacing-double);
-      padding-right: var(--spacing-double);
-      margin: 0 var(--spacing-double) var(--spacing) 0;
-    }
-
-    .octicon.spin {
-      margin-right: var(--spacing);
-      margin-left: 0;
-    }
-  }
 }
 
 .welcome-title,
@@ -146,14 +115,10 @@
   width: 100%;
 }
 
-.welcome-left {
-  flex-grow: 1;
-  width: 60%;
-}
-
+.welcome-left,
 .welcome-right {
   flex-grow: 1;
-  width: 40%;
+  width: 50%;
 }
 
 .welcome-left {
@@ -208,14 +173,14 @@
   justify-content: center;
   align-items: center;
   display: flex;
-  padding: var(--spacing-quad) 0 0 var(--spacing-quad);
+  padding: var(--spacing-quad);
   position: relative;
   overflow: hidden;
 
   .welcome-graphic {
-    height: 100%;
-    object-fit: cover;
-    object-position: left;
+    height: auto;
+    max-height: 100%;
+    width: 100%;
   }
 }
 

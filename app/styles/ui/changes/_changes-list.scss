@@ -9,14 +9,12 @@
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0;
 
   .stashed-changes-button {
     @include ellipsis;
     min-height: 29px;
 
     display: flex;
-    align-items: center;
     flex-grow: 1;
     padding: 0 var(--spacing);
     width: 100%;
@@ -117,11 +115,11 @@
   transition: max-height var(--undo-animation-duration) ease-in;
 }
 
-.undo-exit {
+.undo-leave {
   max-height: 200px;
 }
 
-.undo-exit.undo-exit-active {
+.undo-leave.undo-leave-active {
   max-height: 0;
 
   transition: max-height var(--undo-animation-duration) ease-out;

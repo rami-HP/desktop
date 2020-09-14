@@ -26,10 +26,10 @@ import * as Fs from 'fs'
 import { execSync } from 'child_process'
 import * as AWS from 'aws-sdk'
 import * as Crypto from 'crypto'
-import request from 'request'
+import * as request from 'request'
 
 console.log('Packaging…')
-execSync('yarn package', { stdio: 'inherit' })
+execSync('yarn package')
 
 const sha = platforms.getSha().substr(0, 8)
 
@@ -57,7 +57,7 @@ if (process.platform === 'darwin') {
 
 uploadPromise!
   .then(artifacts => {
-    const names = artifacts.map(function (item, index) {
+    const names = artifacts.map(function(item, index) {
       return item.name
     })
     console.log(`Uploaded artifacts: ${names}`)

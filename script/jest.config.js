@@ -13,7 +13,16 @@ module.exports = {
     // ignore index files
     '!**/index.ts',
   ],
-  reporters: ['default', '<rootDir>/jest-actions-reporter.js'],
+  reporters: [
+    'default',
+    [
+      'jest-junit',
+      {
+        outputDirectory: '.',
+        outputName: 'junit-script-test.xml',
+      },
+    ],
+  ],
   coverageReporters: ['text-summary', 'json', 'html', 'cobertura'],
   globals: {
     'ts-jest': {

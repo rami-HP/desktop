@@ -8,7 +8,7 @@ import { mapStatus } from '../../lib/status'
 interface IChangedFileDetailsProps {
   readonly path: string
   readonly status: AppFileStatus
-  readonly diff: IDiff | null
+  readonly diff: IDiff
 }
 
 /** Displays information about a file */
@@ -36,13 +36,10 @@ export class ChangedFileDetails extends React.Component<
 
   private renderDecorator() {
     const diff = this.props.diff
-
-    if (diff === null) {
-      return null
-    }
-
     if (diff.kind === DiffType.Text && diff.lineEndingsChange) {
-      const message = `Warning: line endings will be changed from '${diff.lineEndingsChange.from}' to '${diff.lineEndingsChange.to}'.`
+      const message = `Warning: line endings will be changed from '${
+        diff.lineEndingsChange.from
+      }' to '${diff.lineEndingsChange.to}'.`
       return (
         <Octicon
           symbol={OcticonSymbol.alert}

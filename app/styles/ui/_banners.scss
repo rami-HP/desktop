@@ -61,11 +61,11 @@
     }
   }
 
-  &.banner-exit {
+  &.banner-leave {
     height: $banner-height;
     opacity: 1;
 
-    &.banner-exit-active {
+    &.banner-leave-active {
       height: 0px;
       opacity: 0;
       transition: height 225ms ease-in-out 175ms, opacity 175ms ease-in;

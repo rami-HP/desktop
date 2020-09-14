@@ -9,6 +9,7 @@ import {
 } from '../../src/models/status'
 import { DiffSelection, DiffSelectionType } from '../../src/models/diff'
 import { HistoryTabMode, IDisplayHistory } from '../../src/lib/app-state'
+import { IGitHubUser } from '../../src/lib/databases'
 import { gitHubRepoFixture } from '../helpers/github-repo-builder'
 
 function createSamplePullRequest(gitHubRepository: GitHubRepository) {
@@ -32,6 +33,8 @@ function createSamplePullRequest(gitHubRepository: GitHubRepository) {
 
 describe('RepositoryStateCache', () => {
   let repository: Repository
+  const defaultGetUsersFunc = (repo: Repository) =>
+    new Map<string, IGitHubUser>()
 
   beforeEach(() => {
     repository = new Repository('/something/path', 1, null, false)
@@ -44,7 +47,7 @@ describe('RepositoryStateCache', () => {
     })
     const firstPullRequest = createSamplePullRequest(gitHubRepository)
 
-    const cache = new RepositoryStateCache()
+    const cache = new RepositoryStateCache(defaultGetUsersFunc)
 
     cache.updateBranchesState(repository, () => {
       return {
@@ -69,7 +72,7 @@ describe('RepositoryStateCache', () => {
 
     const summary = 'Hello world!'
 
-    const cache = new RepositoryStateCache()
+    const cache = new RepositoryStateCache(defaultGetUsersFunc)
 
     cache.updateChangesState(repository, () => {
       return {
@@ -92,7 +95,7 @@ describe('RepositoryStateCache', () => {
   it('can update compare state for a repository', () => {
     const filterText = 'my-cool-branch'
 
-    const cache = new RepositoryStateCache()
+    const cache = new RepositoryStateCache(defaultGetUsersFunc)
 
     cache.updateCompareState(repository, () => {
       const newState: IDisplayHistory = {

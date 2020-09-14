@@ -1,5 +1,26 @@
-import queue from 'queue'
+const queue: (config: QueueConfig) => Queue = require('queue')
 import { revSymmetricDifference } from '../../../lib/git'
+
+// eslint-disable-next-line @typescript-eslint/interface-name-prefix
+interface QueueConfig {
+  // Max number of jobs the queue should process concurrently, defaults to Infinity.
+  readonly concurrency: number
+  // Ensures the queue is always running if jobs are available.
+  // Useful in situations where you are using a queue only for concurrency control.
+  readonly autostart: boolean
+}
+
+// eslint-disable-next-line @typescript-eslint/interface-name-prefix
+interface Queue extends NodeJS.EventEmitter {
+  readonly length: number
+
+  start(): void
+  end(): void
+  push<T>(
+    func: (callback: (error: Error | null, result: T) => void) => void
+  ): void
+}
+
 import { Repository } from '../../../models/repository'
 import { getAheadBehind } from '../../../lib/git'
 import { Branch, IAheadBehind } from '../../../models/branch'
@@ -49,22 +70,38 @@ export class AheadBehindUpdater {
     from: string,
     to: string
   ): Promise<IAheadBehind | null> {
+    return new Promise((resolve, reject) => {
+      if (this.comparisonCache.has(from, to)) {
+        resolve(this.comparisonCache.get(from, to))
+        return
+      }
+
+      this.executeTask(from, to, (error, result) =>
+        error !== null ? reject(error) : resolve(result)
+      )
+    })
+  }
+
+  private executeTask = (
+    from: string,
+    to: string,
+    callback: (error: Error | null, result: IAheadBehind | null) => void
+  ) => {
     if (this.comparisonCache.has(from, to)) {
-      return this.comparisonCache.get(from, to)
+      return
     }
 
     const range = revSymmetricDifference(from, to)
-    const result = await getAheadBehind(this.repository, range)
-
-    if (result !== null) {
-      this.comparisonCache.set(from, to, result)
-    } else {
-      log.debug(
-        `[AheadBehindUpdater] unable to cache '${range}' as no result returned`
-      )
-    }
-
-    return result
+    getAheadBehind(this.repository, range).then(result => {
+      if (result != null) {
+        this.comparisonCache.set(from, to, result)
+      } else {
+        log.debug(
+          `[AheadBehindUpdater] unable to cache '${range}' as no result returned`
+        )
+      }
+      callback(null, result)
+    })
   }
 
   public insert(from: string, to: string, value: IAheadBehind) {
@@ -115,17 +152,16 @@ export class AheadBehindUpdater {
     const newRefsToCompare = new Set<string>(filterBranchesNotInCache(branches))
 
     log.debug(
-      `[AheadBehindUpdater] - found ${newRefsToCompare.size} comparisons to perform`
+      `[AheadBehindUpdater] - found ${
+        newRefsToCompare.size
+      } comparisons to perform`
     )
 
     for (const sha of newRefsToCompare) {
-      this.aheadBehindQueue.push(
-        () =>
-          new Promise<IAheadBehind | null>((resolve, reject) => {
-            requestIdleCallback(() => {
-              this.executeAsyncTask(from, sha).then(resolve, reject)
-            })
-          })
+      this.aheadBehindQueue.push<IAheadBehind | null>(callback =>
+        requestIdleCallback(() => {
+          this.executeTask(from, sha, callback)
+        })
       )
     }
   }

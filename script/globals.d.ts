@@ -7,7 +7,7 @@ type Package = {
 }
 
 declare namespace NodeJS {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
+  // eslint-disable-next-line @typescript-eslint/interface-name-prefix
   interface Process extends EventEmitter {
     on(event: 'unhandledRejection', listener: (error: Error) => void): this
   }

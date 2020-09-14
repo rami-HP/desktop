@@ -3,7 +3,7 @@ import { Octicon, OcticonSymbol } from '../octicons'
 
 /** A warning displayed above the commit button
  */
-export const PermissionsCommitWarning: React.FunctionComponent = props => {
+export const PermissionsCommitWarning: React.SFC = props => {
   return (
     <div id="permissions-commit-warning" onContextMenu={ignoreContextMenu}>
       <div className="warning-icon-container">

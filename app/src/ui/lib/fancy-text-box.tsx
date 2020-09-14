@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Octicon, OcticonSymbol } from '../octicons'
 import { TextBox, ITextBoxProps } from './text-box'
-import classNames from 'classnames'
+import * as classNames from 'classnames'
 
 interface IFancyTextBoxProps extends ITextBoxProps {
   /** Icon to render */
@@ -63,9 +63,9 @@ export class FancyTextBox extends React.Component<
     this.setState({ isFocused: true })
   }
 
-  private onBlur = (value: string) => {
+  private onBlur = () => {
     if (this.props.onBlur !== undefined) {
-      this.props.onBlur(value)
+      this.props.onBlur()
     }
 
     this.setState({ isFocused: false })

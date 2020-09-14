@@ -222,6 +222,7 @@ function createPathDisplayState(
 function createState(path: string, length?: number): IPathTextState {
   const normalizedPath = Path.normalize(path)
   return {
+    normalizedPath,
     longestFit: 0,
     shortestNonFit: undefined,
     availableWidth: undefined,

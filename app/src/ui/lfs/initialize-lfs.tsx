@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { Repository } from '../../models/repository'
 import { Dialog, DialogContent, DialogFooter } from '../dialog'
+import { Monospaced } from '../lib/monospaced'
 import { PathText } from '../lib/path-text'
 import { LinkButton } from '../lib/link-button'
 import { OkCancelButtonGroup } from '../dialog/ok-cancel-button-group'
@@ -52,7 +53,6 @@ export class InitializeLFS extends React.Component<IInitializeLFSProps, {}> {
 
   private onInitialize = () => {
     this.props.onInitialize(this.props.repositories)
-    this.props.onDismissed()
   }
 
   private renderRepositories() {
@@ -81,7 +81,9 @@ export class InitializeLFS extends React.Component<IInitializeLFSProps, {}> {
           <ul>
             {this.props.repositories.map(r => (
               <li key={r.id}>
-                <PathText path={r.path} />
+                <Monospaced>
+                  <PathText path={r.path} />
+                </Monospaced>
               </li>
             ))}
           </ul>

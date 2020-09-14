@@ -1,4 +1,8 @@
-import deepEquals from 'deep-equal'
+const deepEquals: (
+  actual: object,
+  expected: object,
+  opts?: { strict: boolean }
+) => boolean = require('deep-equal')
 
 export function structuralEquals<T extends object>(
   actual: T,

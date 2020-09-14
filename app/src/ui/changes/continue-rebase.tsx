@@ -51,7 +51,9 @@ export class ContinueRebase extends React.Component<IContinueRebaseProps, {}> {
       <div className="warning-untracked-files">
         Untracked files will be excluded
       </div>
-    ) : undefined
+    ) : (
+      undefined
+    )
 
     return (
       <div id="continue-rebase">

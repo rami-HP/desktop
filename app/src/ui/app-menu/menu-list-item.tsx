@@ -1,5 +1,5 @@
 import * as React from 'react'
-import classNames from 'classnames'
+import * as classNames from 'classnames'
 
 import { Octicon, OcticonSymbol } from '../octicons'
 import { MenuItem } from '../../models/app-menu'

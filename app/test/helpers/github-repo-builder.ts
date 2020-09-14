@@ -29,7 +29,6 @@ interface IGitHubRepoFixtureOptions {
 /**
  * Makes a fairly standard `GitHubRepository` for use in tests.
  * Ensures a unique `dbID` for each, during a test run.
- *
  * @param options
  * @returns a new GitHubRepository model
  */

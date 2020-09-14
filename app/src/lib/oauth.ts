@@ -71,6 +71,7 @@ export function resolveOAuthRequest(account: Account) {
     fatalError(
       '`askUserToOAuth` must be called before resolving an auth request.'
     )
+    return
   }
 
   oauthState.resolve(account)
@@ -89,6 +90,7 @@ export function rejectOAuthRequest(error: Error) {
     fatalError(
       '`askUserToOAuth` must be called before rejecting an auth request.'
     )
+    return
   }
 
   oauthState.reject(error)

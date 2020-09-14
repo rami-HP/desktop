@@ -7,14 +7,14 @@ import {
 } from '../lib/list'
 import { IAutocompletionProvider } from './index'
 import { fatalError } from '../../lib/fatal-error'
-import classNames from 'classnames'
+import * as classNames from 'classnames'
 
 interface IRange {
   readonly start: number
   readonly length: number
 }
 
-import getCaretCoordinates from 'textarea-caret'
+import getCaretCoordinates = require('textarea-caret')
 import { showContextualMenu } from '../main-process-proxy'
 
 interface IAutocompletingTextInputProps<ElementType> {
@@ -107,12 +107,6 @@ export abstract class AutocompletingTextInput<
 
   /** The identifier for each autocompletion request. */
   private autocompletionRequestID = 0
-
-  /**
-   * To be implemented by subclasses. It must return the element tag name which
-   * should correspond to the ElementType over which it is parameterized.
-   */
-  protected abstract getElementTagName(): 'textarea' | 'input'
 
   public constructor(props: IAutocompletingTextInputProps<ElementType>) {
     super(props)
@@ -259,6 +253,12 @@ export abstract class AutocompletingTextInput<
 
     this.insertCompletion(item, 'mouseclick')
   }
+
+  /**
+   * To be implemented by subclasses. It must return the element tag name which
+   * should correspond to the ElementType over which it is parameterized.
+   */
+  protected abstract getElementTagName(): 'textarea' | 'input'
 
   private onContextMenu = (event: React.MouseEvent<any>) => {
     if (this.props.onContextMenu) {
@@ -457,6 +457,7 @@ export abstract class AutocompletingTextInput<
         fatalError(
           `The regex (${regex}) returned from ${provider} isn't global, but it should be!`
         )
+        continue
       }
 
       let result: RegExpExecArray | null = null

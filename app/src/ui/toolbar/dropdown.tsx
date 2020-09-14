@@ -3,7 +3,7 @@ import { Octicon, OcticonSymbol } from '../octicons'
 import { assertNever } from '../../lib/fatal-error'
 import { ToolbarButton, ToolbarButtonStyle } from './button'
 import { rectEquals } from '../lib/rect'
-import classNames from 'classnames'
+import * as classNames from 'classnames'
 
 export type DropdownState = 'open' | 'closed'
 

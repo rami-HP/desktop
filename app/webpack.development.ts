@@ -1,7 +1,7 @@
 import * as common from './webpack.common'
 
 import * as webpack from 'webpack'
-import merge from 'webpack-merge'
+import * as merge from 'webpack-merge'
 
 const config: webpack.Configuration = {
   mode: 'development',
@@ -76,8 +76,7 @@ const crashConfig = merge({}, common.crash, config, {
   },
 })
 
-// eslint-disable-next-line no-restricted-syntax
-export default [
+export = [
   mainConfig,
   rendererConfig,
   askPassConfig,

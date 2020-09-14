@@ -2,8 +2,7 @@ import { spawnAndComplete } from './spawn'
 import { getCaptures } from '../helpers/regex'
 
 /**
- * Returns a list of files with conflict markers present
- *
+ * returns a list of files with conflict markers present
  * @param repositoryPath filepath to repository
  * @returns filepaths with their number of conflicted markers
  */

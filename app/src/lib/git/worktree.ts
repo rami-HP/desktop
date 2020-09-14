@@ -33,7 +33,9 @@ export async function listWorkTrees(
       })
     } else {
       log.debug(
-        `[listWorkTrees] match '${m[0]}' does not have the expected data or output. Skipping...`
+        `[listWorkTrees] match '${
+          m[0]
+        }' does not have the expected data or output. Skipping...`
       )
     }
   })

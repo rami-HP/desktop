@@ -4,7 +4,7 @@ import { IAutocompletionProvider } from './index'
 import { GitHubUserStore } from '../../lib/stores'
 import { GitHubRepository } from '../../models/github-repository'
 import { Account } from '../../models/account'
-import { IMentionableUser } from '../../lib/databases/index'
+import { IGitHubUser } from '../../lib/databases/index'
 
 /** An autocompletion hit for a user. */
 export interface IUserHit {
@@ -27,15 +27,12 @@ export interface IUserHit {
   readonly endpoint: string
 }
 
-function userToHit(
-  repository: GitHubRepository,
-  user: IMentionableUser
-): IUserHit {
+function userToHit(user: IGitHubUser): IUserHit {
   return {
     username: user.login,
     name: user.name,
     email: user.email,
-    endpoint: repository.endpoint,
+    endpoint: user.endpoint,
   }
 }
 
@@ -76,7 +73,7 @@ export class UserAutocompletionProvider
       ? users.filter(x => x.login !== account.login)
       : users
 
-    return filtered.map(x => userToHit(this.repository, x))
+    return filtered.map(userToHit)
   }
 
   public renderItem(item: IUserHit): JSX.Element {
@@ -113,6 +110,6 @@ export class UserAutocompletionProvider
       return null
     }
 
-    return userToHit(this.repository, user)
+    return userToHit(user)
   }
 }

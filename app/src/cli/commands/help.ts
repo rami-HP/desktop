@@ -4,7 +4,7 @@ import { commands, ICommandModule, IOption } from '../load-commands'
 
 import { dasherizeOption, printTable } from '../util'
 
-export const command: ICommandModule = {
+const command: ICommandModule = {
   command: 'help [command]',
   description: 'Show the help page for a command',
   handler({ _: [command] }) {
@@ -15,6 +15,7 @@ export const command: ICommandModule = {
     }
   },
 }
+export = command
 
 function printHelp() {
   console.log(chalk.underline('Commands:'))

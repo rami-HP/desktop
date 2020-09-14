@@ -4,14 +4,14 @@
 import * as path from 'path'
 import * as cp from 'child_process'
 import * as fs from 'fs-extra'
-import packager, {
-  arch,
-  ElectronNotarizeOptions,
-  ElectronOsXSignOptions,
-  Options,
-} from 'electron-packager'
-import frontMatter from 'front-matter'
+import * as packager from 'electron-packager'
+
 import { externals } from '../app/webpack.common'
+
+interface IFrontMatterResult<T> {
+  readonly attributes: T
+  readonly body: string
+}
 
 interface IChooseALicense {
   readonly title: string
@@ -27,6 +27,10 @@ export interface ILicense {
   readonly hidden: boolean
 }
 
+const frontMatter: <T>(
+  path: string
+) => IFrontMatterResult<T> = require('front-matter')
+
 import {
   getBundleID,
   getCompanyName,
@@ -40,7 +44,7 @@ import {
   isPublishable,
   getIconFileName,
 } from './dist-info'
-import { isRunningOnFork, isCircleCI, isGitHubActions } from './build-platforms'
+import { isRunningOnFork, isCircleCI } from './build-platforms'
 
 import { updateLicenseDump } from './licenses/update-license-dump'
 import { verifyInjectedSassVariables } from './validate-sass/validate-all'
@@ -72,11 +76,7 @@ generateLicenseMetadata(outRoot)
 
 moveAnalysisFiles()
 
-if (
-  (isCircleCI() || isGitHubActions()) &&
-  process.platform === 'darwin' &&
-  !isRunningOnFork()
-) {
+if (isCircleCI() && !isRunningOnFork()) {
   console.log('Setting up keychain…')
   cp.execSync(path.join(__dirname, 'setup-macos-keychain'))
 }
@@ -126,7 +126,7 @@ interface IPackageAdditionalOptions {
     readonly name: string
     readonly schemes: ReadonlyArray<string>
   }>
-  readonly osxSign: ElectronOsXSignOptions & {
+  readonly osxSign: packager.ElectronOsXSignOptions & {
     readonly hardenedRuntime?: boolean
   }
 }
@@ -139,11 +139,13 @@ function packageApp() {
       return platform
     }
     throw new Error(
-      `Unable to convert to platform for electron-packager: '${process.platform}`
+      `Unable to convert to platform for electron-packager: '${
+        process.platform
+      }`
     )
   }
 
-  const toPackageArch = (targetArch: string | undefined): arch => {
+  const toPackageArch = (targetArch: string | undefined): packager.arch => {
     if (targetArch === undefined) {
       return 'x64'
     }
@@ -163,8 +165,7 @@ function packageApp() {
     : undefined
   if (
     isPublishableBuild &&
-    (isCircleCI() || isGitHubActions()) &&
-    process.platform === 'darwin' &&
+    isCircleCI() &&
     notarizationCredentials === undefined
   ) {
     // we can't publish a mac build without these
@@ -173,7 +174,7 @@ function packageApp() {
     )
   }
 
-  const options: Options & IPackageAdditionalOptions = {
+  const options: packager.Options & IPackageAdditionalOptions = {
     name: getExecutableName(),
     platform: toPackagePlatform(process.platform),
     arch: toPackageArch(process.env.TARGET_ARCH),
@@ -275,6 +276,7 @@ function moveAnalysisFiles() {
 }
 
 function copyDependencies() {
+  // eslint-disable-next-line import/no-dynamic-require
   const originalPackage: Package = require(path.join(
     projectRoot,
     'app',
@@ -328,6 +330,18 @@ function copyDependencies() {
   ) {
     console.log('  Installing dependencies via yarn…')
     cp.execSync('yarn install', { cwd: outRoot, env: process.env })
+  }
+
+  if (isDevelopmentBuild) {
+    console.log(
+      '  Installing 7zip (dependency for electron-devtools-installer)'
+    )
+
+    const sevenZipSource = path.resolve(projectRoot, 'app/node_modules/7zip')
+    const sevenZipDestination = path.resolve(outRoot, 'node_modules/7zip')
+
+    fs.mkdirpSync(sevenZipDestination)
+    fs.copySync(sevenZipSource, sevenZipDestination)
   }
 
   console.log('  Copying git environment…')
@@ -430,7 +444,9 @@ ${licenseText}`
   fs.removeSync(chooseALicense)
 }
 
-function getNotarizationCredentials(): ElectronNotarizeOptions | undefined {
+function getNotarizationCredentials():
+  | packager.ElectronNotarizeOptions
+  | undefined {
   const appleId = process.env.APPLE_ID
   const appleIdPassword = process.env.APPLE_ID_PASSWORD
   if (appleId === undefined || appleIdPassword === undefined) {

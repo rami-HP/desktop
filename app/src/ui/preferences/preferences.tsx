@@ -32,10 +32,6 @@ import {
   parseConfigLockFilePathFromError,
 } from '../../lib/git'
 import { ConfigLockFileExists } from '../lib/config-lock-file-exists'
-import {
-  setDefaultBranch,
-  getDefaultBranch,
-} from '../../lib/helpers/default-branch'
 
 interface IPreferencesProps {
   readonly dispatcher: Dispatcher
@@ -58,15 +54,14 @@ interface IPreferencesState {
   readonly selectedIndex: PreferencesTab
   readonly committerName: string
   readonly committerEmail: string
-  readonly defaultBranch: string
   readonly initialCommitterName: string | null
   readonly initialCommitterEmail: string | null
-  readonly initialDefaultBranch: string | null
   readonly disallowedCharactersMessage: string | null
   readonly optOutOfUsageTracking: boolean
   readonly confirmRepositoryRemoval: boolean
   readonly confirmDiscardChanges: boolean
   readonly confirmForcePush: boolean
+  readonly automaticallySwitchTheme: boolean
   readonly uncommittedChangesStrategyKind: UncommittedChangesStrategyKind
   readonly availableEditors: ReadonlyArray<ExternalEditor>
   readonly selectedExternalEditor: ExternalEditor | null
@@ -96,10 +91,8 @@ export class Preferences extends React.Component<
       selectedIndex: this.props.initialSelectedTab || PreferencesTab.Accounts,
       committerName: '',
       committerEmail: '',
-      defaultBranch: '',
       initialCommitterName: null,
       initialCommitterEmail: null,
-      initialDefaultBranch: null,
       disallowedCharactersMessage: null,
       availableEditors: [],
       optOutOfUsageTracking: false,
@@ -107,6 +100,7 @@ export class Preferences extends React.Component<
       confirmDiscardChanges: false,
       confirmForcePush: false,
       uncommittedChangesStrategyKind: uncommittedChangesStrategyKindDefault,
+      automaticallySwitchTheme: false,
       selectedExternalEditor: this.props.selectedExternalEditor,
       availableShells: [],
       selectedShell: this.props.selectedShell,
@@ -118,7 +112,6 @@ export class Preferences extends React.Component<
   public async componentWillMount() {
     const initialCommitterName = await getGlobalConfigValue('user.name')
     const initialCommitterEmail = await getGlobalConfigValue('user.email')
-    const initialDefaultBranch = await getDefaultBranch()
 
     // There's no point in us reading http.schannelCheckRevoke on macOS, it's
     // just a wasted Git process since the option only affects Windows. Besides,
@@ -140,7 +133,10 @@ export class Preferences extends React.Component<
         }
 
         if (!committerEmail) {
-          committerEmail = lookupPreferredEmail(account)
+          const found = lookupPreferredEmail(account)
+          if (found) {
+            committerEmail = found.email
+          }
         }
       }
     }
@@ -159,10 +155,8 @@ export class Preferences extends React.Component<
     this.setState({
       committerName,
       committerEmail,
-      defaultBranch: initialDefaultBranch,
       initialCommitterName,
       initialCommitterEmail,
-      initialDefaultBranch,
       optOutOfUsageTracking: this.props.optOutOfUsageTracking,
       confirmRepositoryRemoval: this.props.confirmRepositoryRemoval,
       confirmDiscardChanges: this.props.confirmDiscardChanges,
@@ -289,10 +283,8 @@ export class Preferences extends React.Component<
             <Git
               name={this.state.committerName}
               email={this.state.committerEmail}
-              defaultBranch={this.state.defaultBranch}
               onNameChanged={this.onCommitterNameChanged}
               onEmailChanged={this.onCommitterEmailChanged}
-              onDefaultBranchChanged={this.onDefaultBranchChanged}
             />
           </>
         )
@@ -385,10 +377,6 @@ export class Preferences extends React.Component<
     this.setState({ committerEmail })
   }
 
-  private onDefaultBranchChanged = (defaultBranch: string) => {
-    this.setState({ defaultBranch })
-  }
-
   private onSelectedEditorChanged = (editor: ExternalEditor) => {
     this.setState({ selectedExternalEditor: editor })
   }
@@ -446,20 +434,6 @@ export class Preferences extends React.Component<
 
       if (this.state.committerEmail !== this.state.initialCommitterEmail) {
         await setGlobalConfigValue('user.email', this.state.committerEmail)
-      }
-
-      // If the entered default branch is empty, we don't store it and keep
-      // the previous value.
-      // We do this because the preferences dialog doesn't have error states,
-      // and since the preferences dialog have a global "Save" button (that will
-      // save all the changes performed in every single tab), we cannot
-      // block the user from clicking "Save" because the entered branch is not valid
-      // (they will not be able to know the issue if they are in a different tab).
-      if (
-        this.state.defaultBranch.length > 0 &&
-        this.state.defaultBranch !== this.state.initialDefaultBranch
-      ) {
-        await setDefaultBranch(this.state.defaultBranch)
       }
 
       if (

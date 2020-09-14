@@ -1,5 +1,5 @@
 import * as React from 'react'
-import classNames from 'classnames'
+import * as classNames from 'classnames'
 import { DialogHeader } from './header'
 import { createUniqueId, releaseUniqueId } from '../lib/id-pool'
 
@@ -436,7 +436,7 @@ export class Dialog extends React.Component<IDialogProps, IDialogState> {
     }
   }
 
-  private onDialogCancel = (e: Event | React.SyntheticEvent) => {
+  private onDialogCancel = (e: Event) => {
     e.preventDefault()
     this.onDismiss()
   }
@@ -526,18 +526,17 @@ export class Dialog extends React.Component<IDialogProps, IDialogState> {
     if (!e) {
       if (this.dialogElement) {
         this.dialogElement.removeEventListener('cancel', this.onDialogCancel)
+        this.dialogElement.removeEventListener('keydown', this.onKeyDown)
       }
     } else {
       e.addEventListener('cancel', this.onDialogCancel)
+      e.addEventListener('keydown', this.onKeyDown)
     }
 
     this.dialogElement = e
   }
 
-  private onKeyDown = (event: React.KeyboardEvent) => {
-    if (event.defaultPrevented) {
-      return
-    }
+  private onKeyDown = (event: KeyboardEvent) => {
     const shortcutKey = __DARWIN__ ? event.metaKey : event.ctrlKey
     if ((shortcutKey && event.key === 'w') || event.key === 'Escape') {
       this.onDialogCancel(event)
@@ -592,10 +591,8 @@ export class Dialog extends React.Component<IDialogProps, IDialogState> {
         ref={this.onDialogRef}
         id={this.props.id}
         onMouseDown={this.onDialogMouseDown}
-        onKeyDown={this.onKeyDown}
         className={className}
         aria-labelledby={this.state.titleId}
-        tabIndex={-1}
       >
         {this.renderHeader()}
 

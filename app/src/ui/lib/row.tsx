@@ -1,5 +1,5 @@
 import * as React from 'react'
-import classNames from 'classnames'
+import * as classNames from 'classnames'
 
 interface IRowProps {
   /** The class name for the internal element. */

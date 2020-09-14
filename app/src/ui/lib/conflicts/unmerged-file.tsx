@@ -35,7 +35,7 @@ import {
  * Renders an unmerged file status and associated buttons for the merge conflicts modal
  * (An "unmerged file" can be conflicted _and_ resolved or _just_ conflicted)
  */
-export const renderUnmergedFile: React.FunctionComponent<{
+export const renderUnmergedFile: React.SFC<{
   /** repository this file is in (for pathing and git operations) */
   readonly repository: Repository
   /** file path relative to repository */
@@ -83,14 +83,9 @@ export const renderUnmergedFile: React.FunctionComponent<{
         props.openFileInExternalEditor(join(props.repository.path, props.path)),
       repository: props.repository,
       dispatcher: props.dispatcher,
-      ourBranch: props.ourBranch,
-      theirBranch: props.theirBranch,
     })
   }
-  if (
-    isManualConflict(props.status) &&
-    hasUnresolvedConflicts(props.status, props.manualResolution)
-  ) {
+  if (isManualConflict(props.status) && props.manualResolution === undefined) {
     return renderManualConflictedFile({
       path: props.path,
       status: props.status,
@@ -115,7 +110,7 @@ export const renderUnmergedFile: React.FunctionComponent<{
 }
 
 /** renders the status of a resolved file (of a manual or markered conflict) and associated buttons for the merge conflicts modal */
-const renderResolvedFile: React.FunctionComponent<{
+const renderResolvedFile: React.SFC<{
   readonly repository: Repository
   readonly path: string
   readonly status: ConflictedFileStatus
@@ -145,7 +140,7 @@ const renderResolvedFile: React.FunctionComponent<{
 }
 
 /** renders the status of a manually conflicted file and associated buttons for the merge conflicts modal */
-const renderManualConflictedFile: React.FunctionComponent<{
+const renderManualConflictedFile: React.SFC<{
   readonly path: string
   readonly status: ManualConflict
   readonly repository: Repository
@@ -195,15 +190,13 @@ function renderConflictedFileWrapper(
   )
 }
 
-const renderConflictedFileWithConflictMarkers: React.FunctionComponent<{
+const renderConflictedFileWithConflictMarkers: React.SFC<{
   readonly path: string
   readonly status: ConflictsWithMarkers
   readonly resolvedExternalEditor: string | null
   readonly onOpenEditorClick: () => void
   readonly repository: Repository
   readonly dispatcher: Dispatcher
-  readonly ourBranch?: string
-  readonly theirBranch?: string
 }> = props => {
   const humanReadableConflicts = calculateConflicts(
     props.status.conflictMarkerCount
@@ -217,11 +210,8 @@ const renderConflictedFileWithConflictMarkers: React.FunctionComponent<{
   const tooltip = editorButtonTooltip(props.resolvedExternalEditor)
   const onDropdownClick = makeMarkerConflictDropdownClickHandler(
     props.path,
-    props.repository,
-    props.dispatcher,
-    props.status,
-    props.ourBranch,
-    props.theirBranch
+    props.repository.path,
+    props.dispatcher
   )
 
   const content = (
@@ -261,16 +251,30 @@ const makeManualConflictDropdownClickHandler = (
   theirBranch?: string
 ) => {
   return () => {
-    showContextualMenu(
-      getManualResolutionMenuItems(
-        relativeFilePath,
-        repository,
-        dispatcher,
-        status,
-        ourBranch,
-        theirBranch
-      )
-    )
+    const items: IMenuItem[] = [
+      {
+        label: getLabelForManualResolutionOption(status.entry.us, ourBranch),
+        action: () =>
+          dispatcher.updateManualConflictResolution(
+            repository,
+            relativeFilePath,
+            ManualConflictResolutionKind.ours
+          ),
+      },
+      {
+        label: getLabelForManualResolutionOption(
+          status.entry.them,
+          theirBranch
+        ),
+        action: () =>
+          dispatcher.updateManualConflictResolution(
+            repository,
+            relativeFilePath,
+            ManualConflictResolutionKind.theirs
+          ),
+      },
+    ]
+    showContextualMenu(items)
   }
 }
 
@@ -291,14 +295,11 @@ const makeUndoManualResolutionClickHandler = (
 /** makes a click handling function for marker conflict actions */
 const makeMarkerConflictDropdownClickHandler = (
   relativeFilePath: string,
-  repository: Repository,
-  dispatcher: Dispatcher,
-  status: ConflictsWithMarkers,
-  ourBranch?: string,
-  theirBranch?: string
+  repositoryFilePath: string,
+  dispatcher: Dispatcher
 ) => {
   return () => {
-    const absoluteFilePath = join(repository.path, relativeFilePath)
+    const absoluteFilePath = join(repositoryFilePath, relativeFilePath)
     const items: IMenuItem[] = [
       {
         label: OpenWithDefaultProgramLabel,
@@ -308,51 +309,9 @@ const makeMarkerConflictDropdownClickHandler = (
         label: RevealInFileManagerLabel,
         action: () => shell.showItemInFolder(absoluteFilePath),
       },
-      {
-        type: 'separator',
-      },
-      ...getManualResolutionMenuItems(
-        relativeFilePath,
-        repository,
-        dispatcher,
-        status,
-        ourBranch,
-        theirBranch
-      ),
     ]
     showContextualMenu(items)
   }
-}
-
-function getManualResolutionMenuItems(
-  relativeFilePath: string,
-  repository: Repository,
-  dispatcher: Dispatcher,
-  status: ConflictedFileStatus,
-  ourBranch?: string,
-  theirBranch?: string
-): ReadonlyArray<IMenuItem> {
-  return [
-    {
-      label: getLabelForManualResolutionOption(status.entry.us, ourBranch),
-      action: () =>
-        dispatcher.updateManualConflictResolution(
-          repository,
-          relativeFilePath,
-          ManualConflictResolutionKind.ours
-        ),
-    },
-
-    {
-      label: getLabelForManualResolutionOption(status.entry.them, theirBranch),
-      action: () =>
-        dispatcher.updateManualConflictResolution(
-          repository,
-          relativeFilePath,
-          ManualConflictResolutionKind.theirs
-        ),
-    },
-  ]
 }
 
 function resolvedFileStatusString(
@@ -369,7 +328,7 @@ function resolvedFileStatusString(
   return 'No conflicts remaining'
 }
 
-const renderResolvedFileStatusSummary: React.FunctionComponent<{
+const renderResolvedFileStatusSummary: React.SFC<{
   path: string
   status: ConflictedFileStatus
   repository: Repository
@@ -377,18 +336,14 @@ const renderResolvedFileStatusSummary: React.FunctionComponent<{
   manualResolution?: ManualConflictResolution
   branch?: string
 }> = props => {
-  if (
-    isConflictWithMarkers(props.status) &&
-    props.status.conflictMarkerCount === 0
-  ) {
-    return <div className="file-conflicts-status">No conflicts remaining</div>
-  }
-
   const statusString = resolvedFileStatusString(
     props.status,
     props.manualResolution,
     props.branch
   )
+  if (props.manualResolution === undefined) {
+    return <div className="file-conflicts-status">{statusString}</div>
+  }
 
   return (
     <div className="file-conflicts-status">
@@ -426,7 +381,6 @@ function getBranchForResolution(
  * Calculates the number of merge conclicts in a file from the number of markers
  * divides by three and rounds up since each conflict is indicated by three separate markers
  * (`<<<<<`, `>>>>>`, and `=====`)
- *
  * @param conflictMarkers number of conflict markers in a file
  */
 function calculateConflicts(conflictMarkers: number) {

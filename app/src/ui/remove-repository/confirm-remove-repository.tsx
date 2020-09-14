@@ -14,7 +14,7 @@ interface IConfirmRemoveRepositoryProps {
   readonly onConfirmation: (
     repo: Repository,
     deleteRepoFromDisk: boolean
-  ) => Promise<void>
+  ) => void
 
   /** The action to execute when the user cancels */
   readonly onDismissed: () => void
@@ -38,10 +38,10 @@ export class ConfirmRemoveRepository extends React.Component<
     }
   }
 
-  private onSubmit = async () => {
+  private onSubmit = () => {
     this.setState({ isRemovingRepository: true })
 
-    await this.props.onConfirmation(
+    this.props.onConfirmation(
       this.props.repository,
       this.state.deleteRepoFromDisk
     )

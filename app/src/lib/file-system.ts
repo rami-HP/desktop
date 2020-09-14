@@ -3,7 +3,8 @@ import * as Os from 'os'
 import * as Path from 'path'
 import { Disposable } from 'event-kit'
 import { Tailer } from './tailer'
-import byline from 'byline'
+
+const byline = require('byline')
 
 /**
  * Get a path to a temp file using the given name. Note that the file itself

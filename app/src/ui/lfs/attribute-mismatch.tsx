@@ -51,7 +51,7 @@ export class AttributeMismatch extends React.Component<
   private showGlobalGitConfig = () => {
     const path = this.state.globalGitConfigPath
     if (path) {
-      shell.openPath(path)
+      shell.openItem(path)
     }
   }
 
@@ -65,7 +65,7 @@ export class AttributeMismatch extends React.Component<
             : 'Update existing Git LFS filters?'
         }
         onDismissed={this.props.onDismissed}
-        onSubmit={this.onSumit}
+        onSubmit={this.props.onUpdateExistingFilters}
       >
         <DialogContent>
           <p>
@@ -85,10 +85,5 @@ export class AttributeMismatch extends React.Component<
         </DialogFooter>
       </Dialog>
     )
-  }
-
-  private onSumit = () => {
-    this.props.onUpdateExistingFilters()
-    this.props.onDismissed()
   }
 }

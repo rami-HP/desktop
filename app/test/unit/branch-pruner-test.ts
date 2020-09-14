@@ -1,4 +1,4 @@
-import moment from 'moment'
+import * as moment from 'moment'
 import { BranchPruner } from '../../src/lib/stores/helpers/branch-pruner'
 import { Repository } from '../../src/models/repository'
 import { GitStoreCache } from '../../src/lib/stores/git-store-cache'
@@ -8,15 +8,15 @@ import { setupFixtureRepository } from '../helpers/repositories'
 import { shell } from '../helpers/test-app-shell'
 import { TestRepositoriesDatabase } from '../helpers/databases'
 import { GitProcess } from 'dugite'
+import { IGitHubUser } from '../../src/lib/databases'
 import {
   createRepository as createPrunedRepository,
   setupRepository,
 } from '../helpers/repository-builder-branch-pruner'
-import { StatsStore, StatsDatabase } from '../../src/lib/stats'
-import { UiActivityMonitor } from '../../src/ui/lib/ui-activity-monitor'
 
 describe('BranchPruner', () => {
   const onGitStoreUpdated = () => {}
+  const onDidLoadNewCommits = () => {}
   const onDidError = () => {}
 
   let gitStoreCache: GitStoreCache
@@ -27,18 +27,17 @@ describe('BranchPruner', () => {
   beforeEach(async () => {
     gitStoreCache = new GitStoreCache(
       shell,
-      new StatsStore(
-        new StatsDatabase('test-StatsDatabase'),
-        new UiActivityMonitor()
-      ),
       onGitStoreUpdated,
+      onDidLoadNewCommits,
       onDidError
     )
 
     const repositoriesDb = new TestRepositoriesDatabase()
     await repositoriesDb.reset()
     repositoriesStore = new RepositoriesStore(repositoriesDb)
-    repositoriesStateCache = new RepositoryStateCache()
+    repositoriesStateCache = new RepositoryStateCache(
+      () => new Map<string, IGitHubUser>()
+    )
     onPruneCompleted = jest.fn(() => (_: Repository) => {
       return Promise.resolve()
     })

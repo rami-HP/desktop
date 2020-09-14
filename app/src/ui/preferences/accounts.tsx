@@ -41,11 +41,13 @@ export class Accounts extends React.Component<IAccountsProps, {}> {
   }
 
   private renderAccount(account: Account) {
+    const found = lookupPreferredEmail(account)
+    const email = found ? found.email : ''
+
     const avatarUser: IAvatarUser = {
       name: account.name,
-      email: lookupPreferredEmail(account),
+      email: email,
       avatarURL: account.avatarURL,
-      endpoint: account.endpoint,
     }
 
     return (

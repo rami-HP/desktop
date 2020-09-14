@@ -5,8 +5,6 @@ import { updateRemoteUrl } from '../../../../src/lib/stores/updates/update-remot
 import { shell } from '../../../helpers/test-app-shell'
 import { setupFixtureRepository } from '../../../helpers/repositories'
 import { addRemote } from '../../../../src/lib/git'
-import { StatsStore, StatsDatabase } from '../../../../src/lib/stats'
-import { UiActivityMonitor } from '../../../../src/ui/lib/ui-activity-monitor'
 
 describe('Update remote url', () => {
   const apiRepository: IAPIRepository = {
@@ -47,14 +45,7 @@ describe('Update remote url', () => {
       apiRepo
     )
     await addRemote(repository, 'origin', remoteUrl || apiRepo.clone_url)
-    gitStore = new GitStore(
-      repository,
-      shell,
-      new StatsStore(
-        new StatsDatabase('test-StatsDatabase'),
-        new UiActivityMonitor()
-      )
-    )
+    gitStore = new GitStore(repository, shell)
     await gitStore.loadRemotes()
     const gitHubRepository = repository.gitHubRepository!
 

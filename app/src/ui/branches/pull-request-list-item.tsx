@@ -1,6 +1,6 @@
 import * as React from 'react'
-import moment from 'moment'
-import classNames from 'classnames'
+import * as moment from 'moment'
+import * as classNames from 'classnames'
 import { Octicon, OcticonSymbol } from '../octicons'
 import { CIStatus } from './ci-status'
 import { HighlightText } from '../lib/highlight-text'
@@ -79,13 +79,11 @@ export class PullRequestListItem extends React.Component<
   private renderPullRequestStatus() {
     const ref = `refs/pull/${this.props.number}/head`
     return (
-      <div className="ci-status-container">
-        <CIStatus
-          dispatcher={this.props.dispatcher}
-          repository={this.props.repository}
-          commitRef={ref}
-        />
-      </div>
+      <CIStatus
+        dispatcher={this.props.dispatcher}
+        repository={this.props.repository}
+        commitRef={ref}
+      />
     )
   }
 }

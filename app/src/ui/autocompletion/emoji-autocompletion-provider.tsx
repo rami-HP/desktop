@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { IAutocompletionProvider } from './index'
 import { compare } from '../../lib/compare'
-import { DefaultMaxHits } from './common'
 
 /**
  * Interface describing a autocomplete match for the given search
@@ -30,7 +29,7 @@ export class EmojiAutocompletionProvider
   implements IAutocompletionProvider<IEmojiHit> {
   public readonly kind = 'emoji'
 
-  private readonly emoji: Map<string, string>
+  private emoji: Map<string, string>
 
   public constructor(emoji: Map<string, string>) {
     this.emoji = emoji
@@ -41,16 +40,15 @@ export class EmojiAutocompletionProvider
   }
 
   public async getAutocompletionItems(
-    text: string,
-    maxHits = DefaultMaxHits
+    text: string
   ): Promise<ReadonlyArray<IEmojiHit>> {
-    // This is the happy path to avoid sorting and matching
-    // when the user types a ':'. We want to open the popup
-    // with suggestions as fast as possible.
-    if (text.length === 0) {
-      return [...this.emoji.keys()]
-        .map(emoji => ({ emoji, matchStart: 0, matchLength: 0 }))
-        .slice(0, maxHits)
+    // Empty strings is falsy, this is the happy path to avoid
+    // sorting and matching when the user types a ':'. We want
+    // to open the popup with suggestions as fast as possible.
+    if (!text) {
+      return Array.from(this.emoji.keys()).map<IEmojiHit>(emoji => {
+        return { emoji: emoji, matchStart: 0, matchLength: 0 }
+      })
     }
 
     const results = new Array<IEmojiHit>()
@@ -74,14 +72,12 @@ export class EmojiAutocompletionProvider
     //
     // If both those start and length are equal we sort
     // alphabetically
-    return results
-      .sort(
-        (x, y) =>
-          compare(x.matchStart, y.matchStart) ||
-          compare(x.emoji.length, y.emoji.length) ||
-          compare(x.emoji, y.emoji)
-      )
-      .slice(0, maxHits)
+    return results.sort(
+      (x, y) =>
+        compare(x.matchStart, y.matchStart) ||
+        compare(x.emoji.length, y.emoji.length) ||
+        compare(x.emoji, y.emoji)
+    )
   }
 
   public renderItem(hit: IEmojiHit) {

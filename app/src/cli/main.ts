@@ -1,8 +1,4 @@
-import mri, {
-  DictionaryObject,
-  Options as MriOptions,
-  ArrayOrString,
-} from 'mri'
+import * as mri from 'mri'
 import chalk from 'chalk'
 
 import { dasherizeOption, CommandError } from './util'
@@ -49,10 +45,10 @@ function logError(err: CommandError) {
 
 console.log() // nice blank line before the command prompt
 
-interface IMRIOpts extends MriOptions {
-  alias: DictionaryObject<ArrayOrString>
+interface IMRIOpts extends mri.Options {
+  alias: mri.DictionaryObject<mri.ArrayOrString>
   boolean: Array<string>
-  default: DictionaryObject
+  default: mri.DictionaryObject
   string: Array<string>
 }
 

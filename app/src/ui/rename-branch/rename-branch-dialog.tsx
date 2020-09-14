@@ -3,14 +3,17 @@ import * as React from 'react'
 import { Dispatcher } from '../dispatcher'
 import { Repository } from '../../models/repository'
 import { Branch } from '../../models/branch'
+import { sanitizedRefName } from '../../lib/sanitize-ref-name'
+import { TextBox } from '../lib/text-box'
+import { Row } from '../lib/row'
 import { Dialog, DialogContent, DialogFooter } from '../dialog'
 import {
+  renderBranchNameWarning,
   renderBranchHasRemoteWarning,
   renderStashWillBeLostWarning,
 } from '../lib/branch-name-warnings'
 import { IStashEntry } from '../../models/stash-entry'
 import { OkCancelButtonGroup } from '../dialog/ok-cancel-button-group'
-import { RefNameTextBox } from '../lib/ref-name-text-box'
 
 interface IRenameBranchProps {
   readonly dispatcher: Dispatcher
@@ -35,6 +38,8 @@ export class RenameBranch extends React.Component<
   }
 
   public render() {
+    const disabled =
+      !this.state.newName.length || /^\s*$/.test(this.state.newName)
     return (
       <Dialog
         id="rename-branch"
@@ -43,11 +48,17 @@ export class RenameBranch extends React.Component<
         onSubmit={this.renameBranch}
       >
         <DialogContent>
-          <RefNameTextBox
-            label="Name"
-            initialValue={this.props.branch.name}
-            onValueChange={this.onNameChange}
-          />
+          <Row>
+            <TextBox
+              label="Name"
+              value={this.state.newName}
+              onValueChanged={this.onNameChange}
+            />
+          </Row>
+          {renderBranchNameWarning(
+            this.state.newName,
+            sanitizedRefName(this.state.newName)
+          )}
           {renderBranchHasRemoteWarning(this.props.branch)}
           {renderStashWillBeLostWarning(this.props.stash)}
         </DialogContent>
@@ -55,7 +66,7 @@ export class RenameBranch extends React.Component<
         <DialogFooter>
           <OkCancelButtonGroup
             okButtonText={`Rename ${this.props.branch.name}`}
-            okButtonDisabled={this.state.newName.length === 0}
+            okButtonDisabled={disabled}
           />
         </DialogFooter>
       </Dialog>
@@ -67,10 +78,11 @@ export class RenameBranch extends React.Component<
   }
 
   private renameBranch = () => {
+    const name = sanitizedRefName(this.state.newName)
     this.props.dispatcher.renameBranch(
       this.props.repository,
       this.props.branch,
-      this.state.newName
+      name
     )
     this.props.onDismissed()
   }

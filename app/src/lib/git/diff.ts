@@ -455,8 +455,7 @@ export async function getWorkingDirectoryImage(
 }
 
 /**
- * List the modified binary files' paths in the given repository
- *
+ * list the modified binary files' paths in the given repository
  * @param repository to run git operation in
  * @param ref ref (sha, branch, etc) to compare the working index against
  *

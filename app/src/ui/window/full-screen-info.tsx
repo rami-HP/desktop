@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { TransitionGroup, CSSTransition } from 'react-transition-group'
+import { CSSTransitionGroup } from 'react-transition-group'
 import { WindowState } from '../../lib/window-state'
 
 interface IFullScreenInfoProps {
@@ -11,7 +11,8 @@ interface IFullScreenInfoState {
   readonly renderTransitionGroup: boolean
 }
 
-const toastTransitionTimeout = { appear: 100, exit: 250 }
+const transitionAppearDuration = 100
+const transitionLeaveDuration = 250
 const holdDuration = 3000
 
 /**
@@ -59,9 +60,7 @@ export class FullScreenInfo extends React.Component<
 
       this.transitionGroupDisappearTimeoutId = window.setTimeout(
         this.onTransitionGroupDisappearTimeout,
-        toastTransitionTimeout.appear +
-          holdDuration +
-          toastTransitionTimeout.exit
+        transitionAppearDuration + holdDuration + transitionLeaveDuration
       )
 
       this.setState({
@@ -94,17 +93,9 @@ export class FullScreenInfo extends React.Component<
     const kbdShortcut = __DARWIN__ ? '⌃⌘F' : 'F11'
 
     return (
-      <CSSTransition
-        classNames="toast-animation"
-        appear={true}
-        enter={false}
-        exit={true}
-        timeout={toastTransitionTimeout}
-      >
-        <div key="notification" className="toast-notification">
-          Press <kbd>{kbdShortcut}</kbd> to exit fullscreen
-        </div>
-      </CSSTransition>
+      <div key="notification" className="toast-notification">
+        Press <kbd>{kbdShortcut}</kbd> to exit fullscreen
+      </div>
     )
   }
 
@@ -114,9 +105,18 @@ export class FullScreenInfo extends React.Component<
     }
 
     return (
-      <TransitionGroup className="toast-notification-container">
+      <CSSTransitionGroup
+        className="toast-notification-container"
+        transitionName="toast-animation"
+        component="div"
+        transitionAppear={true}
+        transitionEnter={false}
+        transitionLeave={true}
+        transitionAppearTimeout={transitionAppearDuration}
+        transitionLeaveTimeout={transitionLeaveDuration}
+      >
         {this.renderFullScreenNotification()}
-      </TransitionGroup>
+      </CSSTransitionGroup>
     )
   }
 }

@@ -8,6 +8,7 @@ import { getDotComAPIEndpoint } from '../../lib/api'
 import { caseInsensitiveCompare } from '../../lib/compare'
 import { IFilterListGroup, IFilterListItem } from '../lib/filter-list'
 import { IAheadBehind } from '../../models/branch'
+import { enableGroupRepositoriesByOwner } from '../../lib/feature-flag'
 
 /**
  * Special, reserved repository group names
@@ -51,8 +52,12 @@ export function groupRepositories(
     let group: RepositoryGroupIdentifier = KnownRepositoryGroup.NonGitHub
     if (gitHubRepository) {
       if (gitHubRepository.endpoint === getDotComAPIEndpoint()) {
-        group = gitHubRepository.owner.login
-        gitHubOwners.add(group)
+        if (enableGroupRepositoriesByOwner()) {
+          group = gitHubRepository.owner.login
+          gitHubOwners.add(group)
+        } else {
+          group = 'GitHub.com'
+        }
       } else {
         group = KnownRepositoryGroup.Enterprise
       }
@@ -90,13 +95,22 @@ export function groupRepositories(
         localRepositoryStateLookup.get(r.id) || fallbackValue
       const repositoryText =
         r instanceof Repository ? [r.name, nameOf(r)] : [r.name]
-
+      if (enableGroupRepositoriesByOwner()) {
+        return {
+          text: repositoryText,
+          id: r.id.toString(),
+          repository: r,
+          needsDisambiguation:
+            nameCount > 1 && identifier === KnownRepositoryGroup.Enterprise,
+          aheadBehind,
+          changedFilesCount,
+        }
+      }
       return {
-        text: repositoryText,
+        text: [r.name],
         id: r.id.toString(),
         repository: r,
-        needsDisambiguation:
-          nameCount > 1 && identifier === KnownRepositoryGroup.Enterprise,
+        needsDisambiguation: nameCount > 1,
         aheadBehind,
         changedFilesCount,
       }
@@ -106,10 +120,13 @@ export function groupRepositories(
   }
 
   // NB: This ordering reflects the order in the repositories sidebar.
-  const owners = [...gitHubOwners.values()]
-  owners.sort(caseInsensitiveCompare)
-  owners.forEach(addGroup)
-
+  if (enableGroupRepositoriesByOwner()) {
+    const owners = [...gitHubOwners.values()]
+    owners.sort(caseInsensitiveCompare)
+    owners.forEach(addGroup)
+  } else {
+    addGroup('GitHub.com')
+  }
   addGroup(KnownRepositoryGroup.Enterprise)
   addGroup(KnownRepositoryGroup.NonGitHub)
 

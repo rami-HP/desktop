@@ -1,8 +1,4 @@
-import {
-  Repository,
-  RepositoryWithGitHubRepository,
-  RepositoryWithForkedGitHubRepository,
-} from './repository'
+import { Repository, RepositoryWithGitHubRepository } from './repository'
 import { PullRequest } from './pull-request'
 import { Branch } from './branch'
 import { ReleaseSummary } from './release-notes'
@@ -14,7 +10,6 @@ import { ICommitContext } from './commit'
 import { IStashEntry } from './stash-entry'
 import { Account } from '../models/account'
 import { Progress } from './progress'
-import { ITextDiff, DiffSelection } from './diff'
 
 export enum PopupType {
   RenameBranch = 1,
@@ -63,11 +58,6 @@ export enum PopupType {
   CreateFork,
   SChannelNoRevocationCheck,
   CreateTag,
-  DeleteTag,
-  LocalChangesOverwritten,
-  RebaseConflicts,
-  ChooseForkSettings,
-  ConfirmDiscardSelection,
 }
 
 export type Popup =
@@ -84,13 +74,6 @@ export type Popup =
       files: ReadonlyArray<WorkingDirectoryFileChange>
       showDiscardChangesSetting?: boolean
       discardingAllChanges?: boolean
-    }
-  | {
-      type: PopupType.ConfirmDiscardSelection
-      repository: Repository
-      file: WorkingDirectoryFileChange
-      diff: ITextDiff
-      selection: DiffSelection
     }
   | { type: PopupType.Preferences; initialSelectedTab?: PreferencesTab }
   | {
@@ -209,7 +192,7 @@ export type Popup =
   | {
       type: PopupType.ConfirmOverwriteStash
       repository: Repository
-      branchToCheckout: Branch | null
+      branchToCheckout: Branch
     }
   | {
       type: PopupType.ConfirmDiscardStash
@@ -250,18 +233,4 @@ export type Popup =
       targetCommitSha: string
       initialName?: string
       localTags: Map<string, string> | null
-    }
-  | {
-      type: PopupType.DeleteTag
-      repository: Repository
-      tagName: string
-    }
-  | {
-      type: PopupType.ChooseForkSettings
-      repository: RepositoryWithForkedGitHubRepository
-    }
-  | {
-      type: PopupType.LocalChangesOverwritten
-      repository: Repository
-      retryAction: RetryAction
     }

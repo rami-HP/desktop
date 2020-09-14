@@ -15,7 +15,5 @@
 			<string>Alternate</string>
 		</dict>
 	</array>
-	<key>NSAppleEventsUsageDescription</key>
-	<string>GitHub Desktop uses Apple Events to implement integration features with external editors.</string>
 </dict>
 </plist>

@@ -2,12 +2,7 @@ import { Branch } from '../../../models/branch'
 import { PullRequest } from '../../../models/pull-request'
 import { GitHubRepository } from '../../../models/github-repository'
 import { IRemote } from '../../../models/remote'
-import {
-  Repository,
-  isRepositoryWithGitHubRepository,
-  RepositoryWithGitHubRepository,
-  getNonForkGitHubRepository,
-} from '../../../models/repository'
+import { Repository } from '../../../models/repository'
 import { urlMatchesCloneURL } from '../../repository-matching'
 
 type RemotesGetter = (repository: Repository) => Promise<ReadonlyArray<IRemote>>
@@ -40,8 +35,10 @@ export async function inferComparisonBranch(
     }
   }
 
-  if (isRepositoryWithGitHubRepository(repository)) {
-    if (repository.gitHubRepository.fork) {
+  const ghRepo = repository.gitHubRepository
+
+  if (ghRepo !== null) {
+    if (ghRepo.fork) {
       const upstreamBranch = await getDefaultBranchOfForkedGitHubRepo(
         repository,
         branches,
@@ -52,10 +49,7 @@ export async function inferComparisonBranch(
       }
     }
 
-    const originBranch = getDefaultBranchOfGitHubRepo(
-      branches,
-      repository.gitHubRepository
-    )
+    const originBranch = getDefaultBranchOfGitHubRepo(branches, ghRepo)
     if (originBranch !== null) {
       return originBranch
     }
@@ -87,20 +81,28 @@ function getTargetBranchOfPullRequest(
 }
 
 async function getDefaultBranchOfForkedGitHubRepo(
-  repository: RepositoryWithGitHubRepository,
+  repository: Repository,
   branches: ReadonlyArray<Branch>,
   getRemotes: RemotesGetter
 ): Promise<Branch | null> {
-  const repoToUse = getNonForkGitHubRepository(repository)
-  const remotes = await getRemotes(repository)
-  const remote = remotes.find(r => urlMatchesCloneURL(r.url, repoToUse))
+  const parentRepo =
+    repository.gitHubRepository !== null
+      ? repository.gitHubRepository.parent
+      : null
 
-  if (remote === undefined) {
-    log.warn(`Could not find remote with URL ${repoToUse.cloneURL}.`)
+  if (parentRepo === null) {
     return null
   }
 
-  const branchToFind = `${remote.name}/${repoToUse.defaultBranch}`
+  const remotes = await getRemotes(repository)
+  const remote = remotes.find(r => urlMatchesCloneURL(r.url, parentRepo))
+
+  if (remote === undefined) {
+    log.warn(`Could not find remote with URL ${parentRepo.cloneURL}.`)
+    return null
+  }
+
+  const branchToFind = `${remote.name}/${parentRepo.defaultBranch}`
 
   return findBranch(branches, branchToFind)
 }

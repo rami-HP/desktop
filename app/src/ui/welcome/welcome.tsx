@@ -1,5 +1,5 @@
 import * as React from 'react'
-import classNames from 'classnames'
+import * as classNames from 'classnames'
 
 import { Dispatcher } from '../dispatcher'
 import { encodePathAsUrl } from '../../lib/path'
@@ -12,12 +12,10 @@ import { SignInEnterprise } from './sign-in-enterprise'
 import { ConfigureGit } from './configure-git'
 import { UiView } from '../ui-view'
 import { UsageOptOut } from './usage-opt-out'
-import { Disposable } from 'event-kit'
 
 /** The steps along the Welcome flow. */
 export enum WelcomeStep {
   Start = 'Start',
-  SignInToDotComWithBrowser = 'SignInToDotComWithBrowser',
   SignInToDotCom = 'SignInToDotCom',
   SignInToEnterprise = 'SignInToEnterprise',
   ConfigureGit = 'ConfigureGit',
@@ -41,12 +39,6 @@ interface IWelcomeState {
    * time to run to completion.
    */
   readonly exiting: boolean
-
-  /**
-   * Whether or not GitHub.com supports authenticating with username
-   * and password or if we have to enforce the web flow
-   */
-  readonly dotComSupportsBasicAuth: boolean
 }
 
 // Note that we're reusing the welcome illustrations in the crash process, any
@@ -66,16 +58,10 @@ export const WelcomeLeftBottomImageUri = encodePathAsUrl(
 
 /** The Welcome flow. */
 export class Welcome extends React.Component<IWelcomeProps, IWelcomeState> {
-  private dotComSupportsBasicAuthSubscription: Disposable | null = null
-
   public constructor(props: IWelcomeProps) {
     super(props)
 
-    this.state = {
-      currentStep: WelcomeStep.Start,
-      exiting: false,
-      dotComSupportsBasicAuth: props.dispatcher.tryGetDotComSupportsBasicAuth(),
-    }
+    this.state = { currentStep: WelcomeStep.Start, exiting: false }
   }
 
   public componentWillReceiveProps(nextProps: IWelcomeProps) {
@@ -84,22 +70,6 @@ export class Welcome extends React.Component<IWelcomeProps, IWelcomeState> {
 
   public componentDidMount() {
     this.props.dispatcher.recordWelcomeWizardInitiated()
-    this.dotComSupportsBasicAuthSubscription = this.props.dispatcher.onDotComSupportsBasicAuthUpdated(
-      this.onDotComSupportsBasicAuthUpdated
-    )
-  }
-
-  public componentWillUnmount() {
-    if (this.dotComSupportsBasicAuthSubscription !== null) {
-      this.dotComSupportsBasicAuthSubscription.dispose()
-      this.dotComSupportsBasicAuthSubscription = null
-    }
-  }
-
-  private onDotComSupportsBasicAuthUpdated = (
-    dotComSupportsBasicAuth: boolean
-  ) => {
-    this.setState({ dotComSupportsBasicAuth })
   }
 
   /**
@@ -109,10 +79,6 @@ export class Welcome extends React.Component<IWelcomeProps, IWelcomeState> {
    */
   private get inSignInStep() {
     if (this.state.currentStep === WelcomeStep.SignInToDotCom) {
-      return true
-    }
-
-    if (this.state.currentStep === WelcomeStep.SignInToDotComWithBrowser) {
       return true
     }
 
@@ -153,7 +119,9 @@ export class Welcome extends React.Component<IWelcomeProps, IWelcomeState> {
     // Only advance when the state first changes...
     if (this.props.signInState.kind === nextProps.signInState.kind) {
       log.info(
-        `[Welcome] kind ${this.props.signInState.kind} is the same as ${nextProps.signInState.kind}. ignoring...`
+        `[Welcome] kind ${this.props.signInState.kind} is the same as ${
+          nextProps.signInState.kind
+        }. ignoring...`
       )
       return
     }
@@ -171,21 +139,7 @@ export class Welcome extends React.Component<IWelcomeProps, IWelcomeState> {
 
     switch (step) {
       case WelcomeStep.Start:
-      case WelcomeStep.SignInToDotComWithBrowser:
-        const loadingBrowserAuth =
-          step === WelcomeStep.SignInToDotComWithBrowser &&
-          signInState !== null &&
-          signInState.kind === SignInStep.Authentication &&
-          signInState.loading
-
-        return (
-          <Start
-            advance={this.advanceToStep}
-            dispatcher={this.props.dispatcher}
-            loadingBrowserAuth={loadingBrowserAuth}
-            dotComSupportsBasicAuth={this.state.dotComSupportsBasicAuth}
-          />
-        )
+        return <Start advance={this.advanceToStep} />
 
       case WelcomeStep.SignInToDotCom:
         return (

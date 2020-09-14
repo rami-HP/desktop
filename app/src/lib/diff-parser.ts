@@ -20,10 +20,10 @@ import { assertNever } from '../lib/fatal-error'
 // in which case s defaults to 1
 const diffHeaderRe = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/
 
-const DiffPrefixAdd = '+' as const
-const DiffPrefixDelete = '-' as const
-const DiffPrefixContext = ' ' as const
-const DiffPrefixNoNewline = '\\' as const
+const DiffPrefixAdd: '+' = '+'
+const DiffPrefixDelete: '-' = '-'
+const DiffPrefixContext: ' ' = ' '
+const DiffPrefixNoNewline: '\\' = '\\'
 
 type DiffLinePrefix =
   | typeof DiffPrefixAdd
@@ -221,9 +221,9 @@ export class DiffParser {
    * We currently only extract the line number information and
    * ignore any hunk headings.
    *
-   * Example hunk header (text within ``):
+   * Example hunk header:
    *
-   * `@@ -84,10 +82,8 @@ export function parseRawDiff(lines: ReadonlyArray<string>): Diff {`
+   * @@ -84,10 +82,8 @@ export function parseRawDiff(lines: ReadonlyArray<string>): Diff {
    *
    * Where everything after the last @@ is what's known as the hunk, or section, heading
    */

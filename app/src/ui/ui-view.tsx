@@ -1,5 +1,7 @@
 import * as React from 'react'
-import classNames from 'classnames'
+import * as classNames from 'classnames'
+
+interface IUiViewProps extends React.HTMLProps<HTMLDivElement> {}
 
 /**
  * High order component for housing a View.
@@ -14,7 +16,7 @@ import classNames from 'classnames'
  * Examples of what's not a View include the Changes and History tabs
  * as these are contained within the <Repository /> view
  */
-export class UiView extends React.Component<React.HTMLProps<HTMLDivElement>> {
+export class UiView extends React.Component<IUiViewProps, {}> {
   public render() {
     const className = classNames(this.props.className, 'ui-view')
     const props = { ...this.props, className }

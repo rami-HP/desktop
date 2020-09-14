@@ -62,7 +62,8 @@ export class WorkflowPushRejectedDialog extends React.Component<
   private onSignIn = async () => {
     this.setState({ loading: true })
 
-    await this.props.dispatcher.requestBrowserAuthenticationToDotcom()
+    await this.props.dispatcher.beginDotComSignIn()
+    await this.props.dispatcher.requestBrowserAuthentication()
 
     this.props.dispatcher.push(this.props.repository)
     this.props.onDismissed()

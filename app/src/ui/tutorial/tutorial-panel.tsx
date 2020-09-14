@@ -2,6 +2,7 @@ import * as React from 'react'
 import { join } from 'path'
 import { LinkButton } from '../lib/link-button'
 import { Button } from '../lib/button'
+import { Monospaced } from '../lib/monospaced'
 import { Repository } from '../../models/repository'
 import { Dispatcher } from '../dispatcher'
 import { Octicon, OcticonSymbol } from '../octicons'
@@ -14,7 +15,6 @@ import { encodePathAsUrl } from '../../lib/path'
 import { ExternalEditor } from '../../lib/editors'
 import { PopupType } from '../../models/popup'
 import { PreferencesTab } from '../../models/preferences'
-import { Ref } from '../lib/ref'
 
 const TutorialPanelImage = encodePathAsUrl(
   __dirname,
@@ -187,7 +187,7 @@ export class TutorialPanel extends React.Component<
             <p className="description">
               Open this repository in your preferred text editor. Edit the
               {` `}
-              <Ref>README.md</Ref>
+              <Monospaced>README.md</Monospaced>
               {` `}
               file, save it, and come back.
             </p>
@@ -396,6 +396,6 @@ class TutorialStepInstructions extends React.Component<
   }
 }
 
-const SkipLinkButton: React.FunctionComponent<{
-  onClick: () => void
-}> = props => <LinkButton onClick={props.onClick}>Skip</LinkButton>
+const SkipLinkButton: React.SFC<{ onClick: () => void }> = props => (
+  <LinkButton onClick={props.onClick}>Skip</LinkButton>
+)

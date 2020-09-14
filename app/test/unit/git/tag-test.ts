@@ -12,7 +12,6 @@ import {
   createBranch,
   createCommit,
   checkoutBranch,
-  deleteTag,
 } from '../../../src/lib/git'
 import {
   setupFixtureRepository,
@@ -82,17 +81,6 @@ describe('git/tag', () => {
     })
   })
 
-  describe('deleteTag', () => {
-    it('deletes a tag with the given name', async () => {
-      await createTag(repository, 'my-new-tag', 'HEAD')
-      await deleteTag(repository, 'my-new-tag')
-
-      const commit = await getCommit(repository, 'HEAD')
-      expect(commit).not.toBeNull()
-      expect(commit!.tags).toEqual([])
-    })
-  })
-
   describe('getAllTags', () => {
     it('returns an empty array when the repository has no tags', async () => {
       expect(await getAllTags(repository)).toEqual(new Map())
@@ -104,10 +92,7 @@ describe('git/tag', () => {
       await createTag(repository, 'another-tag', commit!.sha)
 
       expect(await getAllTags(repository)).toEqual(
-        new Map([
-          ['my-new-tag', commit!.sha],
-          ['another-tag', commit!.sha],
-        ])
+        new Map([['my-new-tag', commit!.sha], ['another-tag', commit!.sha]])
       )
     })
   })
@@ -139,12 +124,10 @@ describe('git/tag', () => {
       ).toEqual(['my-new-tag'])
     })
 
-    it('returns an empty array after pushing the tag', async () => {
+    it('returns an empty array after pushing', async () => {
       await createTag(repository, 'my-new-tag', 'HEAD')
 
-      await push(repository, account, originRemote, 'master', null, [
-        'my-new-tag',
-      ])
+      await push(repository, account, originRemote, 'master', null)
 
       expect(
         await fetchTagsToPush(repository, account, originRemote, 'master')

@@ -8,6 +8,7 @@ import { getDotComAPIEndpoint } from '../../lib/api'
 import { clipboard } from 'electron'
 import { showContextualMenu } from '../main-process-proxy'
 import { CommitAttribution } from '../lib/commit-attribution'
+import { IGitHubUser } from '../../lib/databases/github-user-database'
 import { AvatarStack } from '../lib/avatar-stack'
 import { IMenuItem } from '../../lib/menu-item'
 import { Octicon, OcticonSymbol } from '../octicons'
@@ -24,10 +25,8 @@ interface ICommitProps {
   readonly onRevertCommit?: (commit: Commit) => void
   readonly onViewCommitOnGitHub?: (sha: string) => void
   readonly onCreateTag?: (targetCommitSha: string) => void
-  readonly onDeleteTag?: (tagName: string) => void
+  readonly gitHubUsers: Map<string, IGitHubUser> | null
   readonly showUnpushedIndicator: boolean
-  readonly unpushedIndicatorTitle?: string
-  readonly unpushedTags?: ReadonlyArray<string>
 }
 
 interface ICommitListItemState {
@@ -35,7 +34,7 @@ interface ICommitListItemState {
 }
 
 /** A component which displays a single commit in a commit list. */
-export class CommitListItem extends React.PureComponent<
+export class CommitListItem extends React.Component<
   ICommitProps,
   ICommitListItemState
 > {
@@ -45,6 +44,7 @@ export class CommitListItem extends React.PureComponent<
     this.state = {
       avatarUsers: getAvatarUsersForCommit(
         props.gitHubRepository,
+        props.gitHubUsers,
         props.commit
       ),
     }
@@ -55,6 +55,7 @@ export class CommitListItem extends React.PureComponent<
       this.setState({
         avatarUsers: getAvatarUsersForCommit(
           nextProps.gitHubRepository,
+          nextProps.gitHubUsers,
           nextProps.commit
         ),
       })
@@ -87,28 +88,20 @@ export class CommitListItem extends React.PureComponent<
             </div>
           </div>
         </div>
-        {this.renderCommitIndicators()}
+        <div className="commit-indicators">
+          {enableGitTagsDisplay() &&
+            renderCommitListItemTags(this.props.commit.tags)}
+          {this.renderUnpushedIndicator()}
+        </div>
       </div>
     )
   }
 
-  private renderCommitIndicators() {
-    const tagIndicator = enableGitTagsDisplay()
-      ? renderCommitListItemTags(this.props.commit.tags)
-      : null
-
-    const unpushedIndicator = this.renderUnpushedIndicator()
-
-    if (tagIndicator || unpushedIndicator) {
-      return (
-        <div className="commit-indicators">
-          {tagIndicator}
-          {unpushedIndicator}
-        </div>
-      )
-    }
-
-    return null
+  public shouldComponentUpdate(nextProps: ICommitProps): boolean {
+    return (
+      this.props.commit.sha !== nextProps.commit.sha ||
+      this.props.showUnpushedIndicator !== nextProps.showUnpushedIndicator
+    )
   }
 
   private renderUnpushedIndicator() {
@@ -119,7 +112,7 @@ export class CommitListItem extends React.PureComponent<
     return (
       <div
         className="unpushed-indicator"
-        title={this.props.unpushedIndicatorTitle}
+        title="This commit hasn't been pushed to the remote repository yet"
       >
         <Octicon symbol={OcticonSymbol.arrowUp} />
       </div>
@@ -173,17 +166,6 @@ export class CommitListItem extends React.PureComponent<
         action: this.onCreateTag,
         enabled: this.props.onCreateTag !== undefined,
       })
-
-      const deleteTagsMenuItem = this.getDeleteTagsMenuItem()
-
-      if (deleteTagsMenuItem !== null) {
-        items.push(
-          {
-            type: 'separator',
-          },
-          deleteTagsMenuItem
-        )
-      }
     }
 
     items.push(
@@ -200,42 +182,6 @@ export class CommitListItem extends React.PureComponent<
     )
 
     showContextualMenu(items)
-  }
-
-  private getDeleteTagsMenuItem(): IMenuItem | null {
-    const { unpushedTags, onDeleteTag, commit } = this.props
-
-    if (
-      onDeleteTag === undefined ||
-      unpushedTags === undefined ||
-      commit.tags.length === 0
-    ) {
-      return null
-    }
-
-    if (commit.tags.length === 1) {
-      const tagName = commit.tags[0]
-
-      return {
-        label: `Delete tag ${tagName}`,
-        action: () => onDeleteTag(tagName),
-        enabled: unpushedTags.includes(tagName),
-      }
-    }
-
-    // Convert tags to a Set to avoid O(n^2)
-    const unpushedTagsSet = new Set(unpushedTags)
-
-    return {
-      label: 'Delete tag…',
-      submenu: commit.tags.map(tagName => {
-        return {
-          label: tagName,
-          action: () => onDeleteTag(tagName),
-          enabled: unpushedTagsSet.has(tagName),
-        }
-      }),
-    }
   }
 }
 

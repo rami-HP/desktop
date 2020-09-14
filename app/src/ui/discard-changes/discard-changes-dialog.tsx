@@ -5,8 +5,10 @@ import { Dispatcher } from '../dispatcher'
 import { WorkingDirectoryFileChange } from '../../models/status'
 import { Dialog, DialogContent, DialogFooter } from '../dialog'
 import { PathText } from '../lib/path-text'
+import { Monospaced } from '../lib/monospaced'
 import { Checkbox, CheckboxValue } from '../lib/checkbox'
 import { TrashNameLabel } from '../lib/context-menu'
+import { toPlatformCase } from '../../lib/platform-case'
 import { OkCancelButtonGroup } from '../dialog/ok-cancel-button-group'
 
 interface IDiscardChangesProps {
@@ -59,25 +61,21 @@ export class DiscardChanges extends React.Component<
     if (this.props.discardingAllChanges) {
       return __DARWIN__ ? 'Discard All Changes' : 'Discard all changes'
     }
-    return __DARWIN__ ? 'Discard Changes' : 'Discard changes'
-  }
-
-  private getDialogTitle() {
-    if (this.props.discardingAllChanges) {
-      return __DARWIN__
-        ? 'Confirm Discard All Changes'
-        : 'Confirm discard all changes'
-    }
-    return __DARWIN__ ? 'Confirm Discard Changes' : 'Confirm discard changes'
+    return __DARWIN__ ? 'Discard changes' : 'Discard changes'
   }
 
   public render() {
+    const discardingAllChanges = this.props.discardingAllChanges
     const isDiscardingChanges = this.state.isDiscardingChanges
 
     return (
       <Dialog
         id="discard-changes"
-        title={this.getDialogTitle()}
+        title={
+          discardingAllChanges
+            ? toPlatformCase('Confirm Discard All Changes')
+            : toPlatformCase('Confirm Discard Changes')
+        }
         onDismissed={this.props.onDismissed}
         onSubmit={this.discard}
         dismissable={isDiscardingChanges ? false : true}
@@ -140,7 +138,9 @@ export class DiscardChanges extends React.Component<
           <ul>
             {this.props.files.map(p => (
               <li key={p.id}>
-                <PathText path={p.path} />
+                <Monospaced>
+                  <PathText path={p.path} />
+                </Monospaced>
               </li>
             ))}
           </ul>
