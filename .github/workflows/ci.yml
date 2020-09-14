@@ -1,5 +1,5 @@
 name: CI
-
+![CI](https://github.com/desktop/desktop/workflows/CI/badge.svg)
 on:
   push:
     branches:
