@@ -13,6 +13,7 @@
 @import 'dialogs/commit-conflicts-warning';
 @import 'dialogs/create-tutorial-repository';
 @import 'dialogs/create-fork';
+@import 'dialogs/fork-settings';
 
 // The styles herein attempt to follow a flow where margins are only applied
 // to the bottom of elements (with the exception of the last child). This to
@@ -69,7 +70,7 @@ dialog {
       }
     }
 
-    &-leave {
+    &-exit {
       opacity: 1;
       transform: scale(1);
       pointer-events: none;
@@ -79,7 +80,7 @@ dialog {
       }
     }
 
-    &-leave-active {
+    &-exit-active {
       opacity: 0.01;
       transform: scale(0.25);
       transition: opacity 100ms ease-in, transform 100ms var(--easing-ease-in-back);
@@ -325,6 +326,7 @@ dialog {
         // but make sure we wrap if necessary.
         white-space: pre-wrap;
         overflow-wrap: break-word;
+        overflow-x: hidden;
 
         &.monospace {
           font-family: var(--font-family-monospace);
@@ -376,6 +378,10 @@ dialog {
     .sign-in-with-browser {
       display: block;
       text-align: center;
+
+      .button-component {
+        width: 100%;
+      }
     }
 
     .forgot-password-row,
