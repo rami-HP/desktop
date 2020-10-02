@@ -27,19 +27,19 @@ interface IGitRemoteURL {
 const remoteRegexes: ReadonlyArray<{ protocol: Protocol; regex: RegExp }> = [
   {
     protocol: 'https',
-    regex: new RegExp('^https?://(?:.+@)?(.+)/(.+)/(.+?)(?:/|.git/?)?$'),
+    regex: new RegExp('^https?://(?:.+@)?([^/]+)/([^/]+)/(.+?)(?:/|.git/?)?$'),
   },
   {
     protocol: 'ssh',
-    regex: new RegExp('^git@(.+):(.+)/(.+?)(?:/|.git)?$'),
+    regex: new RegExp('^git@([^/]+):([^/]+)/(.+?)(?:/|.git)?$'),
   },
   {
     protocol: 'ssh',
-    regex: new RegExp('^git:(.+)/(.+)/(.+?)(?:/|.git)?$'),
+    regex: new RegExp('^git:([^/]+)/([^/]+)/(.+?)(?:/|.git)?$'),
   },
   {
     protocol: 'ssh',
-    regex: new RegExp('^ssh://git@(.+)/(.+)/(.+?)(?:/|.git)?$'),
+    regex: new RegExp('^ssh://git@([^/]+)/([^/]+)/(.+?)(?:/|.git)?$'),
   },
 ]
 
@@ -49,6 +49,11 @@ export function parseRemote(url: string): IGitRemoteURL | null {
     const result = url.match(regex)
     if (!result) {
       continue
+    }
+
+    // We have extra slashes in our path so we need to just take the first one
+    if ((result[3].match(/\//g) || []).length > 0) {
+      result[3] = result[3].split('/')[0]
     }
 
     const hostname = result[1]
